@@ -1,0 +1,180 @@
+// ============================================================
+//  SafeSocket - future_updates.cpp
+//  Planned Features / Ideas / Roadmap
+//  (Comments only — no compiled code)
+// ============================================================
+
+// ------------------------------------------------------------
+// CORE NETWORK FEATURES
+// ------------------------------------------------------------
+
+// TODO: Add UDP support (broadcast, discovery, low-latency modes)
+// TODO: IPv6 full support (dual-stack sockets)
+// TODO: Automatic NAT traversal (UPnP / STUN)
+// TODO: Connection keep-alive / heartbeat system
+// TODO: Reconnect logic for clients
+// TODO: Connection quality monitoring (latency, packet loss)
+// TODO: Bandwidth limiting / rate control
+// TODO: Load balancing for multi-server setups
+
+// ------------------------------------------------------------
+// DATABASE / STORAGE
+// ------------------------------------------------------------
+
+// TODO: Add local database support (SQLite)
+// TODO: Optional external DB support (MySQL / PostgreSQL)
+// TODO: User account storage
+// TODO: Message history persistence
+// TODO: File transfer history
+// TODO: Server statistics logging
+// TODO: Configuration stored in DB instead of file
+// TODO: Backup / restore system
+
+// ------------------------------------------------------------
+// USER MANAGEMENT
+// ------------------------------------------------------------
+
+// TODO: Authentication system (username/password)
+// TODO: Role system (admin / moderator / user)
+// TODO: Permission management
+// TODO: Ban / mute / kick functionality
+// TODO: IP-based restrictions
+// TODO: Session management
+// TODO: Multi-device login support
+
+// ------------------------------------------------------------
+// CHAT / MESSAGING FEATURES
+// ------------------------------------------------------------
+
+// TODO: Private messages (direct client-to-client)
+// TODO: Group chats / channels
+// TODO: Message history retrieval
+// TODO: Edit / delete messages
+// TODO: Message reactions / emojis
+// TODO: Typing indicators
+// TODO: Read receipts
+// TODO: Rich text formatting
+// TODO: Markdown support
+
+// ------------------------------------------------------------
+// FILE TRANSFER SYSTEM
+// ------------------------------------------------------------
+
+// TODO: Resume interrupted transfers
+// TODO: Parallel chunked transfers
+// TODO: File integrity verification (hash checks)
+// TODO: Transfer queue system
+// TODO: Upload/download speed limits
+// TODO: Directory transfer support
+// TODO: Drag-and-drop integration (GUI future)
+// TODO: Secure file sandboxing
+
+// ------------------------------------------------------------
+// ENCRYPTION & SECURITY
+// ------------------------------------------------------------
+
+// TODO: TLS/SSL support (OpenSSL / mbedTLS)
+// TODO: End-to-end encryption mode
+// TODO: Key exchange (Diffie-Hellman / ECDH)
+// TODO: Certificate validation
+// TODO: Encrypted configuration storage
+// TODO: Secure key vault integration
+// TODO: Anti-replay protection
+// TODO: Packet signing / integrity checks
+
+// ------------------------------------------------------------
+// SERVER FEATURES
+// ------------------------------------------------------------
+
+// TODO: Multi-threaded connection handling improvements
+// TODO: Plugin system for server extensions
+// TODO: Server scripting support (Lua / Python)
+// TODO: Remote server administration
+// TODO: Web-based admin panel
+// TODO: Server clustering
+// TODO: Hot reload configuration
+// TODO: Automatic restart on crash
+
+// ------------------------------------------------------------
+// CLIENT FEATURES
+// ------------------------------------------------------------
+
+// TODO: GUI client (Qt / wxWidgets / ImGui)
+// TODO: Notification system
+// TODO: System tray integration
+// TODO: Dark/light themes
+// TODO: Localization / multi-language support
+// TODO: Accessibility improvements
+// TODO: Mobile client support (future)
+
+// ------------------------------------------------------------
+// LOGGING & MONITORING
+// ------------------------------------------------------------
+
+// TODO: Structured logging system
+// TODO: Log rotation
+// TODO: Remote log streaming
+// TODO: Performance metrics
+// TODO: Real-time monitoring dashboard
+// TODO: Debug mode with packet tracing
+// TODO: Crash reporting system
+
+// ------------------------------------------------------------
+// CONFIGURATION SYSTEM
+// ------------------------------------------------------------
+
+// TODO: Live config reload without restart
+// TODO: Environment variable support
+// TODO: Multiple profiles
+// TODO: Encrypted config files
+// TODO: Command aliases / macros
+// TODO: Validation and schema checking
+
+// ------------------------------------------------------------
+// CROSS-PLATFORM IMPROVEMENTS
+// ------------------------------------------------------------
+
+// TODO: macOS native support
+// TODO: Android support (NDK)
+// TODO: Embedded / IoT support
+// TODO: Container-friendly deployment (Docker)
+// TODO: Package manager integration
+
+// ------------------------------------------------------------
+// ADVANCED / FUTURE IDEAS
+// ------------------------------------------------------------
+
+// TODO: Peer-to-peer mode (no central server)
+// TODO: Distributed network / mesh architecture
+// TODO: Voice chat support (VoIP)
+// TODO: Video streaming support
+// TODO: Screen sharing
+// TODO: AI-assisted moderation
+// TODO: Bot API / automation interface
+// TODO: Integration with external services (Discord, etc.)
+// TODO: Plugin marketplace
+
+// ------------------------------------------------------------
+// PERFORMANCE OPTIMIZATION
+// ------------------------------------------------------------
+
+// TODO: Zero-copy networking optimizations
+// TODO: Async I/O model (epoll / IOCP)
+// TODO: Memory pooling
+// TODO: Large-scale stress testing
+// TODO: Profiling and benchmarking tools
+
+// ------------------------------------------------------------
+// DOCUMENTATION & TOOLING
+// ------------------------------------------------------------
+
+// TODO: Full API documentation
+// TODO: Developer guide
+// TODO: Example applications
+// TODO: Automated tests (unit / integration)
+// TODO: CI/CD pipeline setup
+// TODO: Code coverage tracking
+
+// ============================================================
+// End of roadmap
+// ============================================================
