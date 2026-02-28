@@ -10,8 +10,8 @@
   SafeSocket v1.0 - Encrypted P2P Chat & File Transfer
 ```
 
-<img src = ".....server">
-<img src = "client">
+<img src = "https://github.com/PanagiotisKotsorgios/SafeSocket/blob/main/assets/img1.jpg">
+<img src = "https://github.com/PanagiotisKotsorgios/SafeSocket/blob/main/assets/img2.jpg">
 ---
 
 ## Features
