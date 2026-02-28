@@ -1,0 +1,21 @@
+var searchData=
+[
+  ['msg_5fack_0',['MSG_ACK',['../protocol_8hpp.html#a1f2ee98cdd0f84c11ce9fa6b2f059b33a505d3dca17e2c4b466ddcd406422dc4f',1,'protocol.hpp']]],
+  ['msg_5fbroadcast_1',['MSG_BROADCAST',['../protocol_8hpp.html#a1f2ee98cdd0f84c11ce9fa6b2f059b33a7847c8492201ee09336f7300f2924be4',1,'protocol.hpp']]],
+  ['msg_5fclient_5flist_2',['MSG_CLIENT_LIST',['../protocol_8hpp.html#a1f2ee98cdd0f84c11ce9fa6b2f059b33a7f2fb1456e726cc62ffe6cb80bafe141',1,'protocol.hpp']]],
+  ['msg_5fconnect_3',['MSG_CONNECT',['../protocol_8hpp.html#a1f2ee98cdd0f84c11ce9fa6b2f059b33a9591c02aff96d7634f354e2921ac43e7',1,'protocol.hpp']]],
+  ['msg_5fdisconnect_4',['MSG_DISCONNECT',['../protocol_8hpp.html#a1f2ee98cdd0f84c11ce9fa6b2f059b33ad28de1429da7786460889d725c181c76',1,'protocol.hpp']]],
+  ['msg_5ferror_5',['MSG_ERROR',['../protocol_8hpp.html#a1f2ee98cdd0f84c11ce9fa6b2f059b33a28aec242413d6eab32c014fd1cecc4f0',1,'protocol.hpp']]],
+  ['msg_5ffile_5faccept_6',['MSG_FILE_ACCEPT',['../protocol_8hpp.html#a1f2ee98cdd0f84c11ce9fa6b2f059b33a2bf1183eb9722cf05bc5dea33dd1acad',1,'protocol.hpp']]],
+  ['msg_5ffile_5fdata_7',['MSG_FILE_DATA',['../protocol_8hpp.html#a1f2ee98cdd0f84c11ce9fa6b2f059b33a5fcfbf792e909d501db7ef687017a4ce',1,'protocol.hpp']]],
+  ['msg_5ffile_5fend_8',['MSG_FILE_END',['../protocol_8hpp.html#a1f2ee98cdd0f84c11ce9fa6b2f059b33a553afe13747eb9f0330dc538beb17ffa',1,'protocol.hpp']]],
+  ['msg_5ffile_5freject_9',['MSG_FILE_REJECT',['../protocol_8hpp.html#a1f2ee98cdd0f84c11ce9fa6b2f059b33a43c73a68f812fab605a42c9c0ed2f027',1,'protocol.hpp']]],
+  ['msg_5ffile_5fstart_10',['MSG_FILE_START',['../protocol_8hpp.html#a1f2ee98cdd0f84c11ce9fa6b2f059b33a1c1d5ed3ea13196f7f2059324d20182f',1,'protocol.hpp']]],
+  ['msg_5fkick_11',['MSG_KICK',['../protocol_8hpp.html#a1f2ee98cdd0f84c11ce9fa6b2f059b33a765b6ebba981d328bc1abf12fc4f8e42',1,'protocol.hpp']]],
+  ['msg_5fnick_5fset_12',['MSG_NICK_SET',['../protocol_8hpp.html#a1f2ee98cdd0f84c11ce9fa6b2f059b33a8a0c08a7cf0b68e15fbba06b860543ca',1,'protocol.hpp']]],
+  ['msg_5fping_13',['MSG_PING',['../protocol_8hpp.html#a1f2ee98cdd0f84c11ce9fa6b2f059b33aadfe01bd4c9e50a1930619703ba3217d',1,'protocol.hpp']]],
+  ['msg_5fpong_14',['MSG_PONG',['../protocol_8hpp.html#a1f2ee98cdd0f84c11ce9fa6b2f059b33a0cff54efa34be5ac1c92f3df685e77c8',1,'protocol.hpp']]],
+  ['msg_5fprivate_15',['MSG_PRIVATE',['../protocol_8hpp.html#a1f2ee98cdd0f84c11ce9fa6b2f059b33a3374cb2637e12885f09e77177360e5fa',1,'protocol.hpp']]],
+  ['msg_5fserver_5finfo_16',['MSG_SERVER_INFO',['../protocol_8hpp.html#a1f2ee98cdd0f84c11ce9fa6b2f059b33a3c7f7cd42eb97d398ddf9c45e1f4075a',1,'protocol.hpp']]],
+  ['msg_5ftext_17',['MSG_TEXT',['../protocol_8hpp.html#a1f2ee98cdd0f84c11ce9fa6b2f059b33a94c04f9b4a4836aaf6db13e65397246f',1,'protocol.hpp']]]
+];
