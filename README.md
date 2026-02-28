@@ -2,14 +2,6 @@
 
 **Cross-platform encrypted TCP socket chat & file transfer — C++11, no external dependencies.**
 
-```
-  ____         __      ____             __        __
- / __/__ _____/ /___  / __/__  _______/ /_____  / /_
-/ _// _ `/ __/ / _ \ _\ \/ _ \/ __/  '_/ -_) / __/
-/___/\_,_/_/ /_/\___//___/\___/\__/_/\_\\__/ \__/
-  SafeSocket v1.0 - Encrypted P2P Chat & File Transfer
-```
-
 | | |
 |---|---|
 | <img src="https://github.com/PanagiotisKotsorgios/SafeSocket/blob/main/assets/img1.jpg" width="400"/> | <img src="https://github.com/PanagiotisKotsorgios/SafeSocket/blob/main/assets/img2.jpg" width="400"/> |
