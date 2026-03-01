@@ -4,8 +4,7 @@
 
 **Cross-platform encrypted TCP socket chat & file transfer — C++11, no external dependencies.**
 
-<img src = "">
-
+<img src = "https://github.com/PanagiotisKotsorgios/SafeSocket/blob/main/assets/safesocket_logo.png">
 
 
 <br>
