@@ -1,6 +1,6 @@
 > CURENTLY UNDER DEVELOPMENT | NOT SAFE TO USE YET PLEASE BE PATIENT 😁
 
-# The SafeSocket App
+# The SafeSocket app
 
 **Cross-platform encrypted TCP socket chat & file transfer — C++11, no external dependencies.**
 
