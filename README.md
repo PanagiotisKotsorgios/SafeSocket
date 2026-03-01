@@ -21,7 +21,7 @@
 | Feature | Description |
 |---------|-------------|
 | **Real-time chat** | Broadcast to all clients or private messages |
-| **Client ↔ Client** | Messages between clients routed via server |
+| **Client - Client** | Messages between clients routed via server |
 | **File transfer** | Server → client, client → server, server → all clients |
 | **Image/binary** | Any file type supported (binary-safe) |
 | **Encryption** | NONE / XOR / VIGENERE / RC4 (no external libs) |
