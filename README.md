@@ -44,7 +44,6 @@
 - [Configuration File](#configuration-file)
 - [Encryption](#encryption)
 - [Wire Protocol](#wire-protocol)
-- [Project Structure](#project-structure)
 - [Documentation](#documentation)
 - [Contributing](#contributing)
 - [License](#license)
