@@ -1,268 +1,407 @@
-> CURENTLY UNDER DEVELOPMENT | NOT SAFE TO USE YET PLEASE BE PATIENT 😁
-
-# The SafeSocket app
-
-**Cross-platform encrypted TCP socket chat & file transfer — C++11, no external dependencies.**
-
-<img src = "https://github.com/PanagiotisKotsorgios/SafeSocket/blob/main/assets/safesocket_logo.png">
-
+<h1 align="center">The SafeSocket App</h1>
 
 <br>
 
+<p align="center">
+  <img src="https://github.com/PanagiotisKotsorgios/SafeSocket/blob/main/assets/safesocket_logo.png" width="520" alt="SafeSocket Logo"/>
+</p>
+
+
+
+<p align="center">
+  Cross-platform encrypted TCP chat and file transfer — C++11, zero external dependencies.
+</p>
+
+<p align="center">
+  <img src="https://img.shields.io/badge/version-0.0.1-blue" alt="Version"/>
+  <img src="https://img.shields.io/badge/language-C%2B%2B11-lightgrey" alt="C++11"/>
+  <img src="https://img.shields.io/badge/platform-Linux%20%7C%20macOS%20%7C%20Windows-informational" alt="Platform"/>
+  <img src="https://img.shields.io/badge/dependencies-none-brightgreen" alt="Dependencies"/>
+  <img src="https://img.shields.io/badge/license-MIT-green" alt="License"/>
+</p>
+
+---
+
+<br>
 
 | | |
 |---|---|
 | <img src="https://github.com/PanagiotisKotsorgios/SafeSocket/blob/main/assets/img1.jpg" width="400"/> | <img src="https://github.com/PanagiotisKotsorgios/SafeSocket/blob/main/assets/img2.jpg" width="400"/> |
 
+<br>
+
+---
+
+## Table of Contents
+
+- [Overview](#overview)
+- [Features](#features)
+- [Building](#building)
+- [Quick Start](#quick-start)
+- [Command-Line Reference](#command-line-reference)
+- [Server Commands](#server-commands)
+- [Client Commands](#client-commands)
+- [Configuration File](#configuration-file)
+- [Encryption](#encryption)
+- [Wire Protocol](#wire-protocol)
+- [Project Structure](#project-structure)
+- [Documentation](#documentation)
+- [Contributing](#contributing)
+- [License](#license)
+
+---
+
+## Overview
+
+SafeSocket is a single-binary TCP application for real-time chat and file transfer between multiple clients. It runs identically on Linux, macOS, and Windows with no installation and no runtime dependencies — just compile and run.
+
+A server instance accepts concurrent client connections. Clients can broadcast messages to everyone, send private messages, and transfer files of any type and size. All traffic is optionally encrypted at the packet level using one of three built-in cipher modes.
+
+The project is written in strict C++11 and targets a zero-dependency build — every component including the network layer, encryption, and configuration parser is implemented from scratch.
+
 ---
 
 ## Features
 
-| Feature | Description |
-|---------|-------------|
-| **Real-time chat** | Broadcast to all clients or private messages |
-| **Client - Client** | Messages between clients routed via server |
-| **File transfer** | Server → client, client → server, server → all clients |
-| **Image/binary** | Any file type supported (binary-safe) |
-| **Encryption** | NONE / XOR / VIGENERE / RC4 (no external libs) |
-| **Access control** | Optional password to join server |
-| **Keepalive** | Configurable ping/pong heartbeat |
-| **Logging** | Optional log file output |
-| **Config file** | Full INI-style configuration with live reload |
-| **Runtime config** | Change settings without restarting |
-| **Cross-platform** | Windows 10 (MinGW/Dev-C++) + Linux (GCC) |
+| Feature | Detail |
+|---|---|
+| Real-time chat | Broadcast to all clients or send private messages by ID or nickname |
+| Client-to-client routing | All messages routed through the server — no direct P2P socket required |
+| File transfer | Server to client, client to client, server to all clients simultaneously |
+| Binary-safe transfers | Any file type supported — images, archives, executables, binary data |
+| Encryption | NONE / XOR / VIGENERE / RC4 — all implemented without external libraries |
+| Access control | Optional server join password (`--require-key`) |
+| Keepalive | Configurable ping/pong heartbeat with automatic dead-client detection |
+| Logging | Optional log file with configurable path |
+| Configuration file | INI-style config with comments, all keys documented |
+| Live config reload | Change most settings at runtime without restarting |
+| Cross-platform | Linux (GCC), macOS (Clang), Windows (MinGW / MSVC) |
 
 ---
 
 ## Building
 
-### Linux (GCC)
+### Requirements
+
+| Platform | Compiler | Notes |
+|---|---|---|
+| Linux | GCC 4.8+ or Clang 3.4+ | `-pthread` required |
+| macOS | Clang 3.4+ (Xcode CLT) | `-pthread` required |
+| Windows | TDM-GCC 64-bit or MinGW-w64 | `-lws2_32 -mthreads` required |
+| Windows | MSVC 2015+ | `/EHsc`, link `ws2_32.lib` |
+
+### Linux / macOS
 
 ```bash
-# One command:
+# Single command
 g++ -std=c++11 -O2 -pthread -o safesocket \
     main.cpp crypto.cpp config.cpp network.cpp server.cpp client.cpp
 
-# Or use Makefile:
-make
-make debug   # debug build
+# Debug build with sanitisers
+g++ -std=c++11 -g -pthread -fsanitize=address,undefined \
+    -o safesocket_dbg \
+    main.cpp crypto.cpp config.cpp network.cpp server.cpp client.cpp
+
+# Or use the Makefile
+make          # release build
+make debug    # debug build
+make clean
 ```
 
-### Windows 10 (Dev-C++ / MinGW)
+### Windows — MinGW / TDM-GCC
 
-**Option 1 — Batch script:**
-```
-build_windows.bat
-```
-
-**Option 2 — Dev-C++:**
-1. Open `SafeSocket.dev` in Dev-C++
-2. Press F9 (Build & Run) or Ctrl+F9 (Build)
-3. Ensure compiler flags include: `-std=c++11 -lws2_32 -mthreads`
-
-**Option 3 — Manual command:**
 ```bat
+REM Option 1: batch script
+build_windows.bat
+
+REM Option 2: manual command
 g++ -std=c++11 -O2 -o safesocket.exe ^
     main.cpp crypto.cpp config.cpp network.cpp server.cpp client.cpp ^
     -lws2_32 -mthreads
 ```
 
-> **Requires:** TDM-GCC 64-bit or MinGW-w64 — https://jmeubank.github.io/tdm-gcc/
+> TDM-GCC 64-bit download: https://jmeubank.github.io/tdm-gcc/
+
+### Windows — Dev-C++
+
+1. Open `SafeSocket.dev` in Dev-C++
+2. Verify compiler flags include: `-std=c++11 -lws2_32 -mthreads`
+3. Press **F9** to build and run, or **Ctrl+F9** to build only
+
+### Windows — MSVC
+
+```bat
+cl /std:c++17 /EHsc /W3 /O2 ^
+   main.cpp crypto.cpp config.cpp network.cpp server.cpp client.cpp ^
+   /Fe:safesocket.exe /link ws2_32.lib
+```
+
+### CMake (all platforms)
+
+```bash
+mkdir build && cd build
+cmake .. -DCMAKE_BUILD_TYPE=Release
+cmake --build . --parallel
+```
 
 ---
 
 ## Quick Start
 
-### Start the server
-```bash
-./safesocket server
-# Windows:
-safesocket.exe server
-```
+### Basic local chat
 
-### Connect clients (each in separate terminal)
 ```bash
+# Terminal 1 — start the server
+./safesocket server
+
+# Terminal 2 — first client
 ./safesocket client --nick Alice
+
+# Terminal 3 — second client
 ./safesocket client --nick Bob
 ```
 
-### Encrypted example
-```bash
-# Server
-./safesocket server --encrypt RC4 --key secretpassword
+### Encrypted session
 
-# Clients (must use same encryption + key)
-./safesocket client --nick Alice --encrypt RC4 --key secretpassword
-./safesocket client --nick Bob   --encrypt RC4 --key secretpassword
+```bash
+# Server — enable RC4 encryption with a passphrase
+./safesocket server --encrypt RC4 --key my_passphrase
+
+# Clients — must use the same cipher and key
+./safesocket client --nick Alice --encrypt RC4 --key my_passphrase
+./safesocket client --nick Bob   --encrypt RC4 --key my_passphrase
 ```
 
-### With access key (password to join)
+### Server with access control
+
 ```bash
+# Only clients that supply the correct key are allowed in
 ./safesocket server --require-key --access-key joinme123
 
 ./safesocket client --nick Alice --key joinme123
 ```
 
+### LAN usage
+
+```bash
+# Bind the server to all interfaces
+./safesocket server --host 0.0.0.0 --port 9000
+
+# Clients connect using the server's LAN IP
+./safesocket client --nick Alice --host 192.168.1.50 --port 9000
+```
+
+### Generate a config file
+
+```bash
+./safesocket genconfig                  # writes safesocket.conf
+./safesocket genconfig /etc/ss.conf     # custom path
+
+# Start server using a config file
+./safesocket server --config safesocket.conf
+```
+
 ---
 
-## Command-Line Arguments
+## Command-Line Reference
 
 ```
-safesocket server|client [options]
+Usage:
+  safesocket server  [options]
+  safesocket client  [options]
+  safesocket genconfig [path]
 
 Options:
-  --host <ip>            Server IP (default: 127.0.0.1)
-  --port <port>          Port (default: 9000)
-  --nick <name>          Nickname (client mode)
-  --encrypt <type>       NONE | XOR | VIGENERE | RC4
-  --key <passphrase>     Encryption or access key
-  --config <file>        Config file path (default: safesocket.conf)
-  --download-dir <dir>   Where received files are saved
-  --log <file>           Log to file
-  --verbose              Debug output
-  --no-color             Disable ANSI color
-  --max-clients <n>      Max simultaneous clients (server)
-  --require-key          Require access key (server)
-  --access-key <key>     Join password (server)
-  --motd <text>          Message of the Day (server)
-  --server-name <name>   Server display name
-  --help                 Show help
-
-safesocket genconfig [file]   Generate default config file
+  --host <ip>            Bind address (server) or target address (client)
+                         Default: 127.0.0.1
+  --port <n>             TCP port. Default: 9000
+  --nick <name>          Client display nickname. Default: anonymous
+  --encrypt <type>       Cipher: NONE | XOR | VIGENERE | RC4
+                         Default: NONE
+  --key <passphrase>     Encryption passphrase or server access key
+  --config <file>        Config file path. Default: safesocket.conf
+  --download-dir <dir>   Directory for received files. Default: ./downloads
+  --log <file>           Write log output to this file
+  --verbose              Enable debug-level log output
+  --no-color             Disable ANSI colour in CLI output
+  --max-clients <n>      Maximum simultaneous clients (server). Default: 64
+  --require-key          Require access key to connect (server)
+  --access-key <key>     Access key clients must supply (server)
+  --motd <text>          Message of the Day shown to connecting clients
+  --server-name <name>   Server display name. Default: SafeSocket
+  --help                 Print this help and exit
 ```
 
 ---
 
-## Server Commands (CLI)
+## Server Commands
+
+Commands entered in the server terminal while the server is running.
 
 | Command | Description |
-|---------|-------------|
-| `/list` | List all connected clients with ID, nickname, IP |
-| `/msg <id> <text>` | Private message to client by numeric ID |
-| `/msgn <nick> <text>` | Private message to client by nickname |
-| `/broadcast <text>` | Send to all connected clients |
-| `/sendfile <id> <path>` | Send file to specific client |
-| `/sendfileall <path>` | Send file to ALL clients simultaneously |
-| `/kick <id> [reason]` | Disconnect a client |
-| `/kickn <nick> [reason]` | Kick by nickname |
-| `/stats` | Show bytes transferred, message count, etc. |
-| `/config` | Display current configuration |
-| `/set <key> <value>` | Change config value live (no restart needed) |
-| `/saveconfig [file]` | Save current config to file |
-| `/loadconfig [file]` | Reload config from file |
-| `/confighelp` | List all configurable keys |
-| `/quit` | Graceful shutdown |
+|---|---|
+| `/list` | List all connected clients — ID, nickname, IP address |
+| `/msg <id> <text>` | Private message to a client by numeric ID |
+| `/msgn <nick> <text>` | Private message to a client by nickname |
+| `/broadcast <text>` | Send a message to all connected clients |
+| `/sendfile <id> <path>` | Send a file to a specific client |
+| `/sendfileall <path>` | Send a file to all connected clients simultaneously |
+| `/kick <id> [reason]` | Disconnect a client by ID |
+| `/kickn <nick> [reason]` | Disconnect a client by nickname |
+| `/stats` | Show message count, bytes transferred, uptime |
+| `/config` | Display the current configuration |
+| `/set <key> <value>` | Change a config value at runtime without restarting |
+| `/saveconfig [file]` | Save the current configuration to a file |
+| `/loadconfig [file]` | Reload configuration from a file |
+| `/confighelp` | List all valid configuration keys with descriptions |
+| `/quit` | Graceful shutdown — disconnect all clients and exit |
 
 ---
 
-## Client Commands (CLI)
+## Client Commands
 
 | Command | Description |
-|---------|-------------|
-| `<message>` | Broadcast to all clients |
+|---|---|
+| `<message>` | Broadcast the message to all connected clients |
 | `/broadcast <text>` | Explicit broadcast |
-| `/msg <id> <text>` | Private message to client by ID |
-| `/msgn <nick> <text>` | Private message by nickname |
-| `/list` | Show all connected clients |
-| `/myid` | Show your client ID |
-| `/nick <newname>` | Change your nickname live |
-| `/sendfile <id> <path>` | Send file to another client (via server) |
-| `/sendfileserver <path>` | Upload file to server |
-| `/config` | Show configuration |
-| `/set <key> <value>` | Change config live |
-| `/saveconfig [file]` | Save config |
-| `/loadconfig [file]` | Reload config |
-| `/confighelp` | List all config keys |
+| `/msg <id> <text>` | Private message to a client by ID |
+| `/msgn <nick> <text>` | Private message to a client by nickname |
+| `/list` | Show all connected clients and their IDs |
+| `/myid` | Show your own client ID |
+| `/nick <newname>` | Change your display nickname live |
+| `/sendfile <id> <path>` | Send a file to another client (routed via server) |
+| `/sendfileserver <path>` | Upload a file to the server |
+| `/config` | Show the current configuration |
+| `/set <key> <value>` | Change a config value at runtime |
+| `/saveconfig [file]` | Save the current configuration |
+| `/loadconfig [file]` | Reload configuration from a file |
+| `/confighelp` | List all valid configuration keys |
 | `/quit` | Disconnect and exit |
 
 ---
 
 ## Configuration File
 
-Generate with: `./safesocket genconfig`
+Generate a documented default configuration file:
+
+```bash
+./safesocket genconfig
+```
 
 ```ini
 # SafeSocket Configuration File
+# Generated by: safesocket genconfig
 
-[network]
-host             = 127.0.0.1
-port             = 9000
-max_clients      = 64
-recv_timeout     = 300
-connect_timeout  = 10
+# ── Network ──────────────────────────────────────────────────
+host             = 127.0.0.1    # Bind/connect address
+port             = 9000         # TCP port
+max_clients      = 64           # Maximum simultaneous connections
+recv_timeout     = 300          # Socket receive timeout (seconds)
+connect_timeout  = 10           # Connect attempt timeout (seconds)
 
-[identity]
+# ── Identity ─────────────────────────────────────────────────
 nickname         = anonymous
-server_name      = SafeSocket-Server
+server_name      = SafeSocket
 motd             = Welcome to SafeSocket!
 
-[security]
-encrypt_type     = NONE          # NONE | XOR | VIGENERE | RC4
-encrypt_key      =               # Encryption passphrase
-require_key      = false         # Require access key to join
-access_key       =               # Join password
+# ── Security ─────────────────────────────────────────────────
+encrypt_type     = NONE         # NONE | XOR | VIGENERE | RC4
+encrypt_key      =              # Encryption passphrase
+require_key      = false        # Require access key to join
+access_key       =              # Server join password
 
-[transfer]
-download_dir     = ./downloads   # Where received files are saved
-auto_accept_files= false         # Auto-accept without prompting
-max_file_size    = 0             # 0 = unlimited (bytes)
+# ── File Transfer ─────────────────────────────────────────────
+download_dir     = ./downloads  # Directory for received files
+auto_accept_files= false        # Accept files without prompting
+max_file_size    = 0            # Maximum file size in bytes (0 = unlimited)
 
-[logging]
+# ── Logging ───────────────────────────────────────────────────
 log_to_file      = false
 log_file         = safesocket.log
 verbose          = false
 
-[keepalive]
+# ── Keepalive ─────────────────────────────────────────────────
 keepalive        = true
-ping_interval    = 30            # Seconds between pings
+ping_interval    = 30           # Seconds between pings
 
-[misc]
+# ── Miscellaneous ─────────────────────────────────────────────
 color_output     = true
 buffer_size      = 4096
 ```
 
----
-
-## Encryption Details
-
-| Type | Description | Strength |
-|------|-------------|----------|
-| `NONE` | No encryption, plaintext | None |
-| `XOR` | XOR each byte with repeating key | Weak (educational) |
-| `VIGENERE` | Byte-level Vigenère cipher | Weak (educational) |
-| `RC4` | RC4 stream cipher, industry-standard | Strong |
-
-> **Recommended:** Use `RC4` with a long, random passphrase for real security.
-> All encryption operates on the packet payload after the header.
-> Server and all clients must use the same `encrypt_type` and `encrypt_key`.
+All keys can also be changed at runtime with `/set <key> <value>` without restarting the server or client.
 
 ---
 
-## Packet Protocol
+## Encryption
 
-All communication uses a 20-byte binary header:
+All encryption operates on the packet payload after the 20-byte header. The header itself is always transmitted in plaintext to allow magic-byte validation. The server and all clients must use the same `encrypt_type` and `encrypt_key`.
+
+| Mode | Algorithm | Strength | Use Case |
+|---|---|---|---|
+| `NONE` | Plaintext | None | Local development, trusted LAN |
+| `XOR` | Repeating-key XOR | Obfuscation only | Educational use |
+| `VIGENERE` | Byte-level Vigenère cipher | Obfuscation only | Educational use |
+| `RC4` | RC4 stream cipher | Moderate | General use |
+
+> **Note:** XOR and VIGENERE are intentionally weak and provided for educational purposes only.
+> For any network environment where traffic may be observed, use RC4 with a long random passphrase.
+> Proper authenticated encryption (ChaCha20-Poly1305) is planned for a future release — see [ROADMAP.md](ROADMAP.md).
+
+---
+
+## Wire Protocol
+
+All communication uses a fixed 20-byte binary header followed by an optional payload.
 
 ```
-[4 bytes] Magic     = 0x534B5A4F "OKZS"
-[4 bytes] Msg Type  (see MsgType enum in protocol.hpp)
-[4 bytes] Sender ID (0 = server, 0xFFFFFFFF = broadcast)
-[4 bytes] Target ID
-[4 bytes] Data length
-[N bytes] Payload   (optionally encrypted)
+Offset  Size  Field
+──────  ────  ──────────────────────────────────────────────────
+0       4     Magic      = 0x534B5A4F  ("OKZS" in ASCII)
+4       4     Msg Type   (see MsgType enum in protocol.hpp)
+8       4     Sender ID  (0 = server, 0xFFFFFFFF = broadcast)
+12      4     Target ID
+16      4     Data length (bytes of payload that follow)
+20      N     Payload    (optionally encrypted)
 ```
 
-Message flow:
-- **Client → Server → All clients**: MSG_BROADCAST
-- **Client → Server → Target client**: MSG_PRIVATE (target_id set)
-- **Server → Client**: MSG_PRIVATE / MSG_BROADCAST
-- **File transfer**: MSG_FILE_START → MSG_FILE_ACCEPT/REJECT → N×MSG_FILE_DATA → MSG_FILE_END
+### Message flow
+
+| Flow | Message Types |
+|---|---|
+| Client → all clients | `MSG_BROADCAST` |
+| Client → specific client | `MSG_PRIVATE` (target_id set) |
+| Server → specific client | `MSG_PRIVATE` |
+| File transfer | `MSG_FILE_START` → `MSG_FILE_ACCEPT` or `MSG_FILE_REJECT` → N × `MSG_FILE_DATA` → `MSG_FILE_END` |
+| Keepalive | `MSG_PING` (server) → `MSG_PONG` (client) |
+
+The full list of 18 message types is defined in `protocol.hpp`.
 
 ---
 
-## Notes
+## Documentation
 
-- **Localhost default**: Server binds to `127.0.0.1:9000`. For LAN use, set `--host 0.0.0.0`.
-- **File transfer** is synchronous per-connection (server pauses other messages to that client while transferring).
-- **Client-to-client** messaging is always routed through the server.
-- **Downloads** go to `./downloads/` by default (auto-created).
-- **Dev-C++ version**: Tested with TDM-GCC 4.9.2 64-bit. Ensure C++11 is enabled in compiler settings.
+| Document | Description |
+|---|---|
+| [docs/usage.md](docs/usage.md) | Complete CLI flags, all config keys, all commands, examples |
+| [docs/build.md](docs/build.md) | Detailed build instructions for all platforms and toolchains |
+| [docs/architecture.md](docs/architecture.md) | Threading model, wire protocol, encryption pipeline, module map |
+| [CONTRIBUTING.md](CONTRIBUTING.md) | Coding standards, documentation style, PR process |
+| [ROADMAP.md](ROADMAP.md) | Planned releases and long-range feature ideas |
+| [SECURITY.md](SECURITY.md) | Vulnerability reporting policy and known limitations |
+| [tests/README.md](tests/README.md) | Test suite structure, how to build and run tests |
+
+---
+
+## Contributing
+
+Contributions are welcome. Please read [CONTRIBUTING.md](CONTRIBUTING.md) before opening a pull request — it covers coding standards, documentation requirements, naming conventions, and the PR checklist in detail.
+
+For bug reports, open an issue with the version, platform, compiler, steps to reproduce, and expected vs. actual behaviour.
+For security vulnerabilities, follow the process in [SECURITY.md](SECURITY.md) — do not open a public issue.
+
+---
+
+## License
+
+This project is licensed under the MIT License. See [LICENSE](LICENSE) for the full text.
