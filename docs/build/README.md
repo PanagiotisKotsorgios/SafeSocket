@@ -1,9 +1,7 @@
 
 # Build Guide
 
-SafeSocket is a self-contained C++11 application with **no external dependencies**. Everything — networking, encryption, configuration, and CLI — is implemented in the source tree. The only requirements are a C++11 compiler and the standard system socket library on each platform.
-
----
+The only requirements are a C++11 compiler and the standard system socket library on each platform.
 
 ## Table of Contents
 
@@ -22,8 +20,6 @@ SafeSocket is a self-contained C++11 application with **no external dependencies
 - [Verifying the Build](#verifying-the-build)
 - [Troubleshooting](#troubleshooting)
 
----
-
 ## Requirements
 
 | Platform | Compiler | Minimum Standard | System Library |
@@ -33,8 +29,6 @@ SafeSocket is a self-contained C++11 application with **no external dependencies
 | Windows | MSVC ≥ 2015, MinGW-w64 ≥ 5 | C++11 | `ws2_32.lib` (Winsock2) |
 
 No third-party libraries. No package manager steps.
-
----
 
 ## Source Files
 
