@@ -1,7 +1,7 @@
 
 # Usage Guide
 
-This document covers every way to run SafeSocket — starting a server, connecting as a client, configuring the application at runtime, transferring files, and using the interactive CLI on both sides.
+This document covers every way to run SafeSocket - starting a server, connecting as a client, configuring the application at runtime, transferring files, and using the interactive CLI on both sides.
 
 ---
 
