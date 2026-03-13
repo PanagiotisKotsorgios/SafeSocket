@@ -2,23 +2,12 @@
 
 This directory contains the **compiled binaries, build artifacts, and generated files** for the project.
 
-The application is **cross-platform ** that supports both **Windows and Linux**. All compiled executables, intermediate build files, and platform-specific artifacts are generated here by the build system (ex. Make).
+The application is **cross-platform** and supports both **Windows and Linux**. All compiled executables, intermediate build files, and platform-specific artifacts are generated here by the build system (ex. Make).
 
 ⚠️ **Note:**
 Files inside this directory are **generated automatically during the build process** and typically **should not be edited manually**.
 
----
-
-## Purpose
-
-The `build/` directory is used to:
-
-* Store compiled **executables**
-* Store **object files and intermediate build artifacts**
-* Store **platform-specific build outputs**
-* Keep generated files **separate from source code**
-
-Keeping build outputs separate helps maintain a **clean repository structure** and allows easy cleaning or regeneration of builds.
+> Keeping build outputs separate helps maintain a **clean repository structure** and allows easy cleaning or regeneration of builds.
 
 ---
 
