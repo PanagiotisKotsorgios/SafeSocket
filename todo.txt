@@ -1,180 +1,725 @@
 // ============================================================
-//  SafeSocket - future_updates.cpp
-//  Planned Features / Ideas / Roadmap
-//  (Comments only — no compiled code)
+//  SafeSocket — future_updates.cpp
+//  Planned Features / Architecture Ideas / Long-Range Roadmap
+//
+//  This file is a living development scratchpad.
+//  Nothing here is compiled. Items marked [BLOCKED] have a
+//  dependency listed. Items marked [BREAKING] require a
+//  protocol or API version bump before implementation.
+//  Items marked [RESEARCH] need a design decision before work
+//  can begin.
+//
+//  Priority tiers:
+//    [P1] — Must have. Blocks a stable release.
+//    [P2] — Should have. Significantly improves the product.
+//    [P3] — Nice to have. Quality-of-life or advanced use cases.
+//    [P4] — Exploratory. No commitment to ship.
+// ============================================================
+
+
+// ============================================================
+//  SECTION 1 — NETWORK LAYER
 // ============================================================
 
 // ------------------------------------------------------------
-// CORE NETWORK FEATURES
+//  1.1  Transport
 // ------------------------------------------------------------
 
-// TODO: Add UDP support (broadcast, discovery, low-latency modes)
-// TODO: IPv6 full support (dual-stack sockets)
-// TODO: Automatic NAT traversal (UPnP / STUN)
-// TODO: Connection keep-alive / heartbeat system
-// TODO: Reconnect logic for clients
-// TODO: Connection quality monitoring (latency, packet loss)
-// TODO: Bandwidth limiting / rate control
-// TODO: Load balancing for multi-server setups
+// [P1] IPv6 full support
+//       Dual-stack AF_INET6 behind the existing net_* abstraction.
+//       net_listen / net_connect need an address-family parameter.
+//       All sockaddr_in structures replaced with sockaddr_storage.
+//       Requires: address-family abstraction design decision.
+
+// [P2] UDP transport mode (optional, alongside TCP)
+//       Low-latency path for status messages and discovery packets.
+//       Reliable delivery layer (sequence numbers + ACK) needed on top
+//       to match the current TCP guarantees for file data.
+//       [RESEARCH] Decide whether reliable-UDP or raw-UDP is the goal.
+
+// [P2] Automatic NAT traversal
+//       UPnP port mapping for home router setups.
+//       STUN-based external IP discovery for P2P mode.
+//       Fallback TURN relay if direct connection fails.
+//       [RESEARCH] Choose between a minimal hand-rolled UPnP client
+//       or a well-understood external spec (RFC 5389 STUN).
+
+// [P2] Connection quality monitoring
+//       Track per-client round-trip time from MSG_PING / MSG_PONG delta.
+//       Maintain rolling 30-sample window: min / avg / max / jitter.
+//       Expose via /stats and the structured log stream.
+//       Automatic keepalive interval adjustment based on measured RTT.
+
+// [P2] Bandwidth limiting / rate control per client
+//       Token bucket per-client send queue.
+//       Configurable keys: max_send_kbps, max_recv_kbps.
+//       Overflow policy: drop vs. queue vs. backpressure.
+
+// [P3] Load balancing for multi-server setups
+//       Primary server redirects overloaded connections to a secondary
+//       via a new MSG_REDIRECT packet containing host:port.
+//       Client follows the redirect transparently.
+
+// [P3] QUIC transport (very long range)
+//       HTTP/3-style multiplexing, built-in TLS 1.3, 0-RTT reconnect.
+//       [P4] Requires significant research and a third-party QUIC lib
+//       or a self-contained implementation — neither is trivial.
 
 // ------------------------------------------------------------
-// DATABASE / STORAGE
+//  1.2  Connection Lifecycle
 // ------------------------------------------------------------
 
-// TODO: Add local database support (SQLite)
-// TODO: Optional external DB support (MySQL / PostgreSQL)
-// TODO: User account storage
-// TODO: Message history persistence
-// TODO: File transfer history
-// TODO: Server statistics logging
-// TODO: Configuration stored in DB instead of file
-// TODO: Backup / restore system
+// [P1] Reconnect logic with exponential back-off
+//       Config keys: reconnect (bool), reconnect_max_attempts (int),
+//       reconnect_delay_ms (int, doubles on each failure).
+//       On success: re-sends MSG_CONNECT, re-joins active room.
+//       /reconnect command forces immediate retry.
 
-// ------------------------------------------------------------
-// USER MANAGEMENT
-// ------------------------------------------------------------
+// [P2] Async I/O model — epoll (Linux) / IOCP (Windows) / kqueue (macOS)
+//       Current model: one thread per client. Does not scale past ~500
+//       concurrent connections on commodity hardware.
+//       Target model: event-loop with non-blocking sockets and a fixed
+//       worker thread pool. net_* layer needs a full redesign.
+//       [BREAKING] Internal API change; public behaviour unchanged.
 
-// TODO: Authentication system (username/password)
-// TODO: Role system (admin / moderator / user)
-// TODO: Permission management
-// TODO: Ban / mute / kick functionality
-// TODO: IP-based restrictions
-// TODO: Session management
-// TODO: Multi-device login support
+// [P2] Zero-copy networking optimizations
+//       sendfile(2) on Linux for file transfer chunks — eliminates the
+//       kernel ↔ userspace copy for MSG_FILE_DATA payloads.
+//       MSG_ZEROCOPY socket option for large outbound buffers.
+//       [BLOCKED] Requires async I/O model above.
 
-// ------------------------------------------------------------
-// CHAT / MESSAGING FEATURES
-// ------------------------------------------------------------
+// [P3] Connection multiplexing
+//       Multiple logical streams over a single TCP connection.
+//       Useful for simultaneous chat + file transfer without head-of-line
+//       blocking on the same socket.
 
-// TODO: Private messages (direct client-to-client)
-// TODO: Group chats / channels
-// TODO: Message history retrieval
-// TODO: Edit / delete messages
-// TODO: Message reactions / emojis
-// TODO: Typing indicators
-// TODO: Read receipts
-// TODO: Rich text formatting
-// TODO: Markdown support
+// [P3] WebSocket framing layer (optional compile flag)
+//       Wrap the SafeSocket wire protocol in WebSocket frames so that
+//       browser-based clients can connect without a native binary.
+//       Hand-rolled RFC 6455 — no external dependency.
 
-// ------------------------------------------------------------
-// FILE TRANSFER SYSTEM
-// ------------------------------------------------------------
-
-// TODO: Resume interrupted transfers
-// TODO: Parallel chunked transfers
-// TODO: File integrity verification (hash checks)
-// TODO: Transfer queue system
-// TODO: Upload/download speed limits
-// TODO: Directory transfer support
-// TODO: Drag-and-drop integration (GUI future)
-// TODO: Secure file sandboxing
-
-// ------------------------------------------------------------
-// ENCRYPTION & SECURITY
-// ------------------------------------------------------------
-
-// TODO: TLS/SSL support (OpenSSL / mbedTLS)
-// TODO: End-to-end encryption mode
-// TODO: Key exchange (Diffie-Hellman / ECDH)
-// TODO: Certificate validation
-// TODO: Encrypted configuration storage
-// TODO: Secure key vault integration
-// TODO: Anti-replay protection
-// TODO: Packet signing / integrity checks
-
-// ------------------------------------------------------------
-// SERVER FEATURES
-// ------------------------------------------------------------
-
-// TODO: Multi-threaded connection handling improvements
-// TODO: Plugin system for server extensions
-// TODO: Server scripting support (Lua / Python)
-// TODO: Remote server administration
-// TODO: Web-based admin panel
-// TODO: Server clustering
-// TODO: Hot reload configuration
-// TODO: Automatic restart on crash
-
-// ------------------------------------------------------------
-// CLIENT FEATURES
-// ------------------------------------------------------------
-
-// TODO: GUI client (Qt / wxWidgets / ImGui)
-// TODO: Notification system
-// TODO: System tray integration
-// TODO: Dark/light themes
-// TODO: Localization / multi-language support
-// TODO: Accessibility improvements
-// TODO: Mobile client support (future)
-
-// ------------------------------------------------------------
-// LOGGING & MONITORING
-// ------------------------------------------------------------
-
-// TODO: Structured logging system
-// TODO: Log rotation
-// TODO: Remote log streaming
-// TODO: Performance metrics
-// TODO: Real-time monitoring dashboard
-// TODO: Debug mode with packet tracing
-// TODO: Crash reporting system
-
-// ------------------------------------------------------------
-// CONFIGURATION SYSTEM
-// ------------------------------------------------------------
-
-// TODO: Live config reload without restart
-// TODO: Environment variable support
-// TODO: Multiple profiles
-// TODO: Encrypted config files
-// TODO: Command aliases / macros
-// TODO: Validation and schema checking
-
-// ------------------------------------------------------------
-// CROSS-PLATFORM IMPROVEMENTS
-// ------------------------------------------------------------
-
-// TODO: macOS native support
-// TODO: Android support (NDK)
-// TODO: Embedded / IoT support
-// TODO: Container-friendly deployment (Docker)
-// TODO: Package manager integration
-
-// ------------------------------------------------------------
-// ADVANCED / FUTURE IDEAS
-// ------------------------------------------------------------
-
-// TODO: Peer-to-peer mode (no central server)
-// TODO: Distributed network / mesh architecture
-// TODO: Voice chat support (VoIP)
-// TODO: Video streaming support
-// TODO: Screen sharing
-// TODO: AI-assisted moderation
-// TODO: Bot API / automation interface
-// TODO: Integration with external services (Discord, etc.)
-// TODO: Plugin marketplace
-
-// ------------------------------------------------------------
-// PERFORMANCE OPTIMIZATION
-// ------------------------------------------------------------
-
-// TODO: Zero-copy networking optimizations
-// TODO: Async I/O model (epoll / IOCP)
-// TODO: Memory pooling
-// TODO: Large-scale stress testing
-// TODO: Profiling and benchmarking tools
-
-// ------------------------------------------------------------
-// DOCUMENTATION & TOOLING
-// ------------------------------------------------------------
-
-// TODO: Full API documentation
-// TODO: Developer guide
-// TODO: Example applications
-// TODO: Automated tests (unit / integration)
-// TODO: CI/CD pipeline setup
-// TODO: Code coverage tracking
 
 // ============================================================
-// End of roadmap
+//  SECTION 2 — SECURITY & ENCRYPTION
+// ============================================================
+
+// ------------------------------------------------------------
+//  2.1  Authenticated Encryption
+// ------------------------------------------------------------
+
+// [P1] ChaCha20-Poly1305 cipher mode (EncryptType::CHACHA20)
+//       Self-contained implementation — no OpenSSL, no mbedTLS.
+//       ~200 lines ChaCha20 + ~150 lines Poly1305 in crypto.cpp.
+//       Nonce: 12 bytes derived from packet_counter XOR sender_id.
+//       MSG_FILE_DATA chunks authenticated individually.
+//       Empty key remains a no-op (existing contract preserved).
+
+// [P1] X25519 ephemeral key exchange
+//       New message types MSG_DH_HELLO / MSG_DH_RESPONSE.
+//       Ephemeral public key exchanged on every new connection.
+//       Shared secret becomes session encryption key.
+//       Pre-shared encrypt_key usable as additional KDF input (HKDF).
+//       Session keys never written to any log level.
+//       [BREAKING] Adds two new MsgType values; MAGIC bump required.
+
+// [P2] Anti-replay protection
+//       64-bit monotonic packet counter embedded in every packet.
+//       Receiver maintains a sliding window of accepted counter values.
+//       Duplicate or replayed packets are silently dropped.
+//       [BREAKING] PacketHeader layout change — protocol version bump.
+
+// [P2] Packet signing / HMAC integrity (without full encryption)
+//       Optional mode: NONE encryption but HMAC-SHA256 tag appended
+//       to each packet payload.
+//       Detects tampering on untrusted networks without the CPU cost
+//       of full stream encryption.
+
+// [P2] Encrypted configuration storage
+//       Config files written with ChaCha20 payload, PBKDF2-derived key.
+//       Passphrase entered at startup or via environment variable.
+//       Sensitive fields (encrypt_key, access_key) encrypted at rest
+//       even when the rest of the config is plaintext.
+
+// [P3] Certificate-based server identity (self-signed)
+//       Server generates a self-signed Ed25519 certificate on first run.
+//       Certificate fingerprint printed to stdout and written to
+//       server.fingerprint for out-of-band distribution.
+//       Client pinning: client refuses connection if fingerprint changes.
+//       [RESEARCH] Ed25519 self-contained implementation scope.
+
+// [P3] End-to-end encryption for private messages
+//       Server never sees plaintext of MSG_PRIVATE payloads.
+//       Sender encrypts with recipient's long-term public key.
+//       Key distribution via MSG_CLIENT_LIST (add pubkey field).
+//       [BREAKING] MSG_CLIENT_LIST payload format change.
+
+// ------------------------------------------------------------
+//  2.2  Access Control
+// ------------------------------------------------------------
+
+// [P2] Role-based access control (RBAC)
+//       Roles: guest, user, moderator, admin.
+//       Each role has a bitmask of permitted operations.
+//       Roles stored per-nickname in a roles.conf file.
+//       Admin role required for /kick, /ban, /set, server commands.
+
+// [P2] IP allowlist / blocklist
+//       Config keys: ip_allowlist (comma-separated CIDRs),
+//       ip_blocklist (comma-separated CIDRs).
+//       Evaluated in the accept loop before MSG_CONNECT is processed.
+//       Supports both IPv4 CIDR and individual addresses.
+
+// [P2] Account lockout after repeated auth failures
+//       Track per-IP failure count with a TTL.
+//       After N failures within T seconds, block that IP for
+//       lockout_duration_seconds (configurable).
+//       Log each lockout event with client IP and failure count.
+
+// [P3] Two-factor auth stub
+//       Server generates a TOTP secret on first connect for each
+//       username. Client sends TOTP code as second factor in
+//       MSG_CONNECT payload.
+//       [RESEARCH] Whether a self-contained TOTP implementation
+//       (RFC 6238, HMAC-SHA1, 30-second window) is feasible at ~100 lines.
+
+
+// ============================================================
+//  SECTION 3 — DATABASE & PERSISTENCE
+// ============================================================
+
+// [P2] Embedded SQLite database
+//       Single .db file alongside the binary — no external server.
+//       Schema: users, sessions, messages, file_transfers, bans, stats.
+//       SQLite amalgamation (sqlite3.c) bundled in src/vendor/ —
+//       single header include, no separate build step.
+//       NOTE: This is the one justified exception to the zero-dependency
+//       rule because SQLite is public domain and ships as a single file.
+
+// [P2] Message history persistence
+//       MSG_BROADCAST and MSG_ROOM_MSG written to the messages table.
+//       Configurable retention: history_max_messages (int, default 1000)
+//       and history_max_days (int, default 30).
+//       New connecting clients receive the last N messages on join
+//       via a MSG_HISTORY_REPLAY burst.
+
+// [P2] File transfer history
+//       Record: sender_id, receiver_id, filename, size, checksum,
+//       transfer_start, transfer_end, status (complete/rejected/aborted).
+//       Queryable via /history files [limit] server command.
+
+// [P2] Persistent user accounts
+//       username, password_hash (bcrypt-style, self-contained),
+//       created_at, last_seen, role, ban_status.
+//       Account created on first successful connect with a new nickname
+//       if auth mode is enabled.
+
+// [P3] Server statistics persistence
+//       Daily rollup: connections, messages, bytes, files, auth_failures.
+//       Queryable via /stats [date] command.
+//       Export to CSV via /stats export <path>.
+
+// [P3] Configuration stored in DB
+//       Alternative to flat INI file.
+//       Allows live key/value updates without file I/O.
+//       Config::load() reads from DB if db_config = true is set in
+//       the bootstrap .conf file.
+
+// [P4] Optional external DB support (MySQL / PostgreSQL)
+//       Thin adapter layer over the SQLite internal API.
+//       Useful for clustered deployments sharing a central database.
+//       [BLOCKED] Requires async I/O model and connection pooling.
+
+
+// ============================================================
+//  SECTION 4 — MESSAGING & CHANNELS
+// ============================================================
+
+// [P1] Named rooms / channels
+//       MSG_ROOM_JOIN, MSG_ROOM_LEAVE, MSG_ROOM_MSG, MSG_ROOM_LIST.
+//       Server maintains rooms map (name → set of client IDs).
+//       Default room #general created at startup; all clients auto-join.
+//       /join, /leave, /rooms commands on both server and client CLIs.
+//       [BREAKING] Four new MsgType values.
+
+// [P2] Message edit and delete
+//       MSG_MSG_EDIT and MSG_MSG_DELETE carry original message UUID.
+//       Server broadcasts the edit/delete to all clients who received
+//       the original.
+//       [BLOCKED] Requires message UUIDs — needs persistence layer.
+
+// [P2] Typing indicators
+//       MSG_TYPING sent by client when user starts composing.
+//       Server relays to room members with a 5-second TTL.
+//       Suppressed if client sends fewer than 1 MSG_TYPING per 4 seconds
+//       to avoid indicator spam.
+
+// [P2] Read receipts
+//       MSG_READ sent by receiver after rendering a message.
+//       Sender receives a delivery notification.
+//       Configurable: read_receipts = true/false.
+
+// [P3] Message reactions
+//       MSG_REACT carries message UUID + UTF-8 reaction string (max 4 bytes).
+//       Server aggregates reaction counts and broadcasts MSG_REACT_UPDATE.
+
+// [P3] Rich text / Markdown formatting
+//       Server-side Markdown → annotated plaintext stripping.
+//       Client-side rendering is the client's responsibility.
+//       No binary encoding change — just UTF-8 convention in MSG_TEXT
+//       payload with a format flag byte in the header.
+
+// [P3] Message threading / reply chains
+//       MSG_TEXT payload gains optional parent_message_uuid field.
+//       Thread depth limited to 3 levels to avoid display complexity.
+
+// [P4] Message scheduling
+//       Client sends MSG_SCHEDULE with a UTC delivery timestamp.
+//       Server holds the message and delivers it at the scheduled time.
+
+
+// ============================================================
+//  SECTION 5 — FILE TRANSFER SYSTEM
+// ============================================================
+
+// [P1] File transfer progress reporting
+//       MSG_FILE_PROGRESS (server → sender): bytes_relayed counter.
+//       Client CLI renders in-place progress bar with speed estimate.
+//       Format: filename [=========>  ] 78% (4.6 MB / 5.9 MB) @ 1.2 MB/s
+
+// [P1] Path traversal prevention (server-side)
+//       Strip all directory components from incoming filenames.
+//       Reject filenames containing: ../ ..\\ absolute paths, null bytes,
+//       control characters, or reserved Windows names (CON, NUL, etc.).
+//       Log and drop MSG_FILE_START if filename fails validation.
+
+// [P2] Transfer resume after disconnect
+//       FileStartPayload gains resume_offset (uint64) field.
+//       On reconnect, sender specifies how many bytes were already received.
+//       Receiver truncates/seeks the partial file and continues from offset.
+//       [BREAKING] FileStartPayload layout change.
+
+// [P2] Parallel chunked transfers (multi-stream)
+//       Single file split across N parallel TCP streams for maximum
+//       throughput on high-bandwidth links.
+//       Reassembly order tracked by chunk sequence number.
+//       [BLOCKED] Requires connection multiplexing.
+
+// [P2] File integrity verification
+//       FileStartPayload includes file_hash (32 bytes, BLAKE2s).
+//       Receiver verifies hash after MSG_FILE_END.
+//       On mismatch: send MSG_FILE_REJECT with reason "hash mismatch",
+//       delete the partial file, log the event.
+
+// [P2] Transfer queue with priority
+//       Client maintains a local queue; one active transfer at a time
+//       per remote peer by default.
+//       /queue list, /queue cancel <id> commands.
+//       Priority levels: normal, high. High-priority transfers
+//       pause the current normal-priority transfer.
+
+// [P3] Directory transfer
+//       Recursively walk a directory; send a synthetic
+//       MSG_DIR_START → [MSG_FILE_* per file] → MSG_DIR_END sequence.
+//       Receiver recreates the directory structure under download_dir.
+
+// [P3] Upload and download speed limits
+//       Per-transfer bandwidth cap. Config keys: max_upload_kbps,
+//       max_download_kbps (0 = unlimited).
+//       Implemented as a token bucket in the send loop.
+
+// [P4] Binary delta transfer (rsync-style)
+//       Send only changed blocks of a file using a rolling checksum diff.
+//       Significant bandwidth saving for incremental backups or
+//       repeated transfers of large files with small changes.
+
+
+// ============================================================
+//  SECTION 6 — USER MANAGEMENT
+// ============================================================
+
+// [P2] Username / password authentication
+//       MSG_CONNECT payload extended: auth_type (uint8),
+//       username (length-prefixed), password_hash (SHA-256 of password).
+//       Server checks against users table. Failure → MSG_ERROR + disconnect.
+//       [BREAKING] MSG_CONNECT payload format change.
+
+// [P2] Session tokens
+//       On successful auth, server issues a session_token (32 random bytes).
+//       Token can replace password on reconnect within session_ttl_seconds.
+//       Tokens stored in sessions table, invalidated on /logout or expiry.
+
+// [P2] Multi-device login
+//       One username may have multiple concurrent sessions.
+//       MSG_SESSION_LIST allows the user to see active sessions.
+//       /logout all terminates all sessions for the current username.
+
+// [P2] Ban system
+//       /ban <nick|id> [duration] [reason] — temporary or permanent.
+//       Bans stored in DB (or bans.conf if no DB).
+//       IP ban and username ban enforced independently.
+//       /unban <nick|ip>, /banlist commands.
+
+// [P3] Mute system
+//       /mute <nick|id> [duration] — messages from muted clients
+//       are dropped server-side, not just hidden client-side.
+//       Muted client receives no notification.
+
+// [P3] Permission management per channel
+//       Per-room permission overrides: read-only, no-file-transfer,
+//       moderator-only-write.
+//       Stored in rooms table.
+
+// [P4] Audit log
+//       Immutable append-only log of all privileged actions:
+//       kicks, bans, config changes, file transfers, auth events.
+//       Written to audit.log, separate from the main log.
+
+
+// ============================================================
+//  SECTION 7 — SERVER FEATURES
+// ============================================================
+
+// [P2] Hot reload configuration
+//       SIGHUP (Linux/macOS) or named-pipe signal (Windows) triggers
+//       Config::load() without restart.
+//       Network-affecting keys (host, port, max_clients) require restart
+//       and are skipped with a log warning.
+
+// [P2] Remote administration
+//       Dedicated admin socket (separate port, configurable).
+//       Admin commands sent as JSON over the admin socket.
+//       Authenticated by admin_key (separate from access_key).
+//       Allows scripting server management without a local terminal.
+
+// [P2] Server clustering / federation (basic)
+//       Two servers can peer: share MSG_BROADCAST and MSG_ROOM_MSG
+//       across the peer link.
+//       /peer <host:port> command establishes a server-to-server link.
+//       [RESEARCH] Conflict resolution for split-brain scenarios.
+
+// [P3] Plugin system
+//       Shared library (.so / .dll) loaded at startup.
+//       Plugin API: on_connect, on_message, on_file_start, on_disconnect.
+//       Plugins can modify, block, or generate packets.
+//       Plugin isolation: each plugin runs in a separate thread.
+
+// [P3] Scripting support (Lua)
+//       Embedded Lua 5.4 interpreter (single amalgamation file).
+//       Scripts loaded from scripts/ directory at startup.
+//       Same event hooks as the plugin API.
+//       /reload scripts command hot-reloads all scripts.
+
+// [P3] Web-based admin panel
+//       Embedded HTTP/1.1 server on admin_http_port (default 8080).
+//       Serves a single-page HTML/JS dashboard: client list, stats,
+//       message log tail, file transfer history.
+//       Hand-rolled — no external web framework.
+
+// [P4] Automatic crash recovery
+//       Watchdog thread monitors the accept loop and keepalive thread.
+//       If either thread is detected as hung (no activity for N seconds),
+//       the watchdog signals a controlled restart.
+
+
+// ============================================================
+//  SECTION 8 — CLIENT FEATURES
+// ============================================================
+
+// [P2] Notification system
+//       Trigger OS desktop notification on: private message received,
+//       file transfer request, mention of own nickname in broadcast.
+//       Linux: libnotify D-Bus call (hand-rolled, no library).
+//       macOS: NSUserNotification via osascript subprocess.
+//       Windows: Shell_NotifyIcon Win32 API.
+
+// [P3] GUI client (ImGui)
+//       Dear ImGui renders inside an SDL2 or GLFW window.
+//       Panels: server browser, chat area, file transfer queue, settings.
+//       No Qt, no wxWidgets — ImGui + one windowing backend only.
+//       [BLOCKED] CLI client must remain fully functional in parallel.
+
+// [P3] Command history and tab-completion
+//       CLI input stores last 100 commands in history (up/down arrows).
+//       Tab-completes: /commands, nicknames, room names, config keys.
+//       Persistent history saved to ~/.safesocket_history.
+
+// [P3] Multiple server connections
+//       Client maintains a map of active connections (label → Client).
+//       /connect <label> <host:port> adds a connection.
+//       /switch <label> switches the active context.
+//       Incoming messages from all connections displayed with a label prefix.
+
+// [P3] Localization / multi-language support
+//       All user-facing strings extracted to strings.h locale map.
+//       Locale selected by LC_ALL or a lang = en config key.
+//       Initial locales: en, el (Greek), de, fr.
+
+// [P4] Mobile client (Android NDK / iOS)
+//       C++ core unchanged. Platform-specific UI layer only.
+//       Push notifications via FCM / APNs for background message delivery.
+
+
+// ============================================================
+//  SECTION 9 — LOGGING & MONITORING
+// ============================================================
+
+// [P1] Log levels (ERROR / WARN / INFO / DEBUG)
+//       All std::cerr calls audited and assigned a level.
+//       Config key: log_level. Messages below the threshold suppressed.
+
+// [P1] Structured log format (text and JSON)
+//       Config key: log_format = text | json.
+//       JSON mode: {"ts":"...","level":"...","module":"...","event":"...",...}
+//       Machine-parseable for log aggregators (Loki, Splunk, etc.).
+
+// [P2] Log rotation
+//       Config keys: log_max_size_mb, log_max_files.
+//       Rotate by size. Compressed (.gz) rotation option.
+//       log_compress = true pipes old logs through zlib (self-contained).
+
+// [P2] Remote log streaming
+//       Optional syslog(3) output (LOG_DAEMON facility) on Linux/macOS.
+//       Windows Event Log via ReportEventA on Windows.
+//       UDP syslog forwarding (RFC 5424) for remote log aggregators.
+
+// [P2] Performance metrics
+//       Per-second sample: connections, msg/s, bytes/s, thread count.
+//       Exposed via /metrics command (plain text) and admin HTTP endpoint
+//       (/metrics path, Prometheus text format).
+
+// [P3] Packet-level debug tracing
+//       Config key: trace_packets = true.
+//       Logs every packet: direction, type name, sender, target, data_len.
+//       Disabled at compile time in release builds (zero overhead).
+
+// [P3] Crash reporting
+//       On SIGSEGV / SIGABRT, write a crash report to crash_<pid>.log:
+//       timestamp, signal, last 20 log lines, stack trace (backtrace(3)
+//       on Linux, StackWalk64 on Windows).
+
+
+// ============================================================
+//  SECTION 10 — CONFIGURATION SYSTEM
+// ============================================================
+
+// [P2] Live config reload (SIGHUP / admin command)
+//       /loadconfig re-parses the config file at runtime.
+//       Network-affecting keys (host, port) require restart — warn and skip.
+
+// [P2] Environment variable overrides
+//       Every config key has a SS_<UPPER_KEY> env var equivalent.
+//       Env vars take precedence over the config file, CLI flags override both.
+//       Example: SS_PORT=9001 SS_ENCRYPT_TYPE=RC4 ./safesocket server
+
+// [P2] Config profiles
+//       Named sections in the config file: [profile.home], [profile.work].
+//       CLI flag --profile <name> selects the active profile.
+//       Keys in the profile section override the global defaults.
+
+// [P2] Schema validation and type checking
+//       Config::validate() called after load().
+//       Reports all invalid values in a single pass rather than failing
+//       on the first bad key.
+//       Returns a list of ValidationError{key, value, reason}.
+
+// [P3] Command aliases
+//       Config key: alias.<name> = <command string>.
+//       Example: alias.bc = /broadcast
+//       Stored in config, applied in the CLI command dispatcher.
+
+// [P3] Encrypted config files
+//       Config encrypted with ChaCha20, key derived via PBKDF2 from
+//       a passphrase entered at startup (or SS_CONFIG_PASS env var).
+//       [BLOCKED] Requires ChaCha20 implementation (Section 2.1).
+
+
+// ============================================================
+//  SECTION 11 — CROSS-PLATFORM & DEPLOYMENT
+// ============================================================
+
+// [P2] Docker / container support
+//       Dockerfile: multi-stage build, scratch final image, ~3 MB.
+//       Environment variables map to all config keys (Section 10).
+//       Health check: docker HEALTHCHECK calls safesocket ping.
+//       docker-compose.yml: server + two client examples.
+
+// [P2] Package manager integration
+//       Homebrew formula (macOS / Linux).
+//       Debian package via dpkg-buildpackage.
+//       RPM spec file.
+//       Scoop manifest (Windows).
+//       GitHub Actions release workflow builds and uploads all four.
+
+// [P2] macOS native improvements
+//       Code signing and notarization for Gatekeeper.
+//       Universal binary (x86-64 + arm64) via lipo.
+//       launchd plist for server auto-start.
+
+// [P3] Android NDK support
+//       JNI bridge exposing Server and Client classes to Java/Kotlin.
+//       CMake Android toolchain file.
+
+// [P3] Embedded / IoT support
+//       Strip server code from the client build (SS_CLIENT_ONLY=1).
+//       Replace std::map with a fixed-size array for low-memory targets.
+//       Static binary with musl libc.
+
+// [P4] WASM / Emscripten build
+//       Client compiled to WebAssembly for browser-native operation.
+//       Network layer replaced with WebSocket framing.
+//       [BLOCKED] Requires WebSocket framing layer (Section 1.1).
+
+
+// ============================================================
+//  SECTION 12 — PERFORMANCE
+// ============================================================
+
+// [P2] Memory pooling for packet buffers
+//       Pre-allocated pool of vector<uint8_t> buffers reused across
+//       send/receive cycles. Eliminates per-packet heap allocation.
+//       Pool size configurable: buffer_pool_size (default 64).
+
+// [P2] Large-scale stress testing
+//       Automated test scenario: 1000 concurrent clients, 10 000 msg/s,
+//       continuous 64 MB file transfers.
+//       Measured outputs: latency percentiles (p50/p95/p99),
+//       peak memory, CPU per core, packet loss rate.
+
+// [P3] Profiling and benchmarking tooling
+//       Built-in micro-benchmark mode: safesocket bench --clients N
+//       --duration S --msg-size B.
+//       Outputs a summary table and writes results.json.
+
+// [P3] CPU affinity pinning
+//       Config key: cpu_affinity = 0,1,2,3.
+//       Pins the accept loop and worker threads to specific cores.
+//       Linux: sched_setaffinity. Windows: SetThreadAffinityMask.
+
+
+// ============================================================
+//  SECTION 13 — ADVANCED / FUTURE CONCEPTS
+// ============================================================
+
+// [P4] Peer-to-peer mode (serverless)
+//       Clients discover each other via a lightweight UDP broadcast
+//       or a known rendezvous address.
+//       Messages routed via a distributed hash table (Kademlia-inspired).
+//       [RESEARCH] Significant protocol and security rework required.
+
+// [P4] Distributed / mesh architecture
+//       Automatic server election among a pool of SafeSocket nodes.
+//       Raft-like consensus for room state and user list.
+//       [BLOCKED] Requires clustering (Section 7) as a foundation.
+
+// [P4] Voice chat (VoIP)
+//       Opus codec frames sent over the UDP transport.
+//       Jitter buffer and packet loss concealment in the client.
+//       [BLOCKED] Requires UDP transport and async I/O.
+
+// [P4] Bot API / automation interface
+//       A machine-readable variant of the admin socket.
+//       Clients connect with a bot flag in MSG_CONNECT; server does not
+//       list them in /list but routes messages to them normally.
+//       Webhook mode: server POSTs events to a configured HTTP URL.
+
+// [P4] Plugin marketplace (infrastructure only)
+//       plugins.json index hosted on GitHub Pages.
+//       /plugin search <term>, /plugin install <name> commands.
+//       Plugins installed to ~/.safesocket/plugins/.
+//       No code execution from the marketplace — download and manual
+//       activation only.
+
+// [P4] AI-assisted moderation (hook only)
+//       on_message plugin hook receives the text before it is relayed.
+//       The hook can call an external HTTP API (e.g. a local Ollama
+//       instance) and drop or flag the message.
+//       SafeSocket itself has no AI code — this is purely a hook point.
+
+
+// ============================================================
+//  SECTION 14 — DOCUMENTATION & TOOLING
+// ============================================================
+
+// [P1] Doxygen HTML generation
+//       All public headers are already documented.
+//       Add Doxyfile to the repository root.
+//       GitHub Actions publishes to GitHub Pages on every tag.
+
+// [P1] CI/CD pipeline (GitHub Actions)
+//       Jobs: build (Linux GCC, Linux Clang, macOS, Windows MSVC),
+//       test (unit, integration, stress), asan, tsan, coverage.
+//       Matrix: Debug and Release configurations for every job.
+//       Coverage report uploaded to Codecov.
+
+// [P2] Developer guide
+//       How to add a new MsgType end-to-end (protocol → server → client → test).
+//       How to add a new config key end-to-end.
+//       How to write and register a plugin.
+//       How to run the full test suite with all sanitisers.
+
+// [P2] Example applications
+//       examples/chat_bot.cpp — a minimal bot that echoes messages.
+//       examples/file_sync.cpp — watches a directory and syncs changes.
+//       examples/monitor.cpp — connects and logs all traffic to stdout.
+
+// [P2] Code coverage tracking
+//       lcov / gcov on Linux, llvm-cov on macOS.
+//       Coverage gate: PR blocked if unit test coverage drops below 90%.
+//       HTML report generated and uploaded as a CI artifact.
+
+// [P3] Fuzzing harness
+//       libFuzzer targets for:
+//         - net_recv_packet (malformed wire input)
+//         - Config::load (malformed INI input)
+//         - crypto_decrypt (malformed ciphertext)
+//       OSS-Fuzz integration for continuous fuzzing.
+
+// [P3] Static analysis integration
+//       clang-tidy with a project-specific .clang-tidy config.
+//       cppcheck in CI with --error-exitcode=1.
+//       MSVC /analyze in the Windows CI job.
+
+// [P3] Man page
+//       safesocket(1) covering all modes, flags, and config keys.
+//       Generated from usage.md via pandoc in the release workflow.
+//       Installed to /usr/local/share/man/man1 by make install.
+
+
+// ============================================================
+//  SECTION 15 — KNOWN TECHNICAL DEBT
+// ============================================================
+
+// [P1] g_config global singleton
+//       Blocks multi-instance testing and embedded use cases.
+//       Refactor: pass Config& explicitly to Server and Client constructors.
+//       Estimate: ~2 hours of mechanical change + test suite update.
+
+// [P1] sleep_ms() timing in integration tests
+//       ~30 test cases rely on fixed sleep durations that flake on
+//       slow CI runners. Replace with polled assertions (timeout 2s).
+
+// [P2] Server::send_text() signature inconsistency
+//       Some call sites pass sender_id explicitly; others rely on
+//       SERVER_ID default. Audit and normalise all call sites.
+
+// [P2] ClientInfo constructed with new, never with make_unique
+//       Entire codebase predates the C++14 target in the original design.
+//       If/when the language baseline moves to C++14, migrate.
+
+// [P2] config.cpp::set() uses a long if/else chain for key dispatch
+//       Should be a std::map<std::string, std::function<void(const std::string&)>>.
+//       The current chain is ~200 lines and hard to audit.
+
+// [P3] No timeout on net_recv_packet
+//       A misbehaving client that sends a valid header but never sends
+//       the payload will hold a thread indefinitely.
+//       Fix: SO_RCVTIMEO set to recv_timeout before every blocking recv.
+
+// [P3] FILE_CHUNK constant is not negotiated
+//       Hardcoded at 65536 on both sides.
+//       A future performance optimisation may want larger chunks (256 KB)
+//       on high-bandwidth links. Add chunk_size to FileStartPayload.
+
+// ============================================================
+//  End of future_updates.cpp
 // ============================================================
