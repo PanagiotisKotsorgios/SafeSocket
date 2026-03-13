@@ -4,7 +4,7 @@ This directory contains the **compiled binaries, build artifacts, and generated 
 
 The application is **cross-platform** and supports both **Windows and Linux**. All compiled executables, intermediate build files, and platform-specific artifacts are generated here by the build system (ex. Make).
 
-⚠️ **Note:**
+**Note:**
 Files inside this directory are **generated automatically during the build process** and typically **should not be edited manually**.
 
 > Keeping build outputs separate helps maintain a **clean repository structure** and allows easy cleaning or regeneration of builds.
