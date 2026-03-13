@@ -2,8 +2,6 @@
 
 This document describes the internal design of SafeSocket: how the modules fit together, the threading model, the wire protocol, the encryption pipeline, and the data flow for every major operation.
 
----
-
 ## Table of Contents
 
 - [High-Level Overview](#high-level-overview)
@@ -222,8 +220,6 @@ TCP
 
 All algorithms are implemented in `crypto.cpp` with no external dependencies. The key and algorithm are read from `g_config` at the call site in `net_send_packet` and `net_recv_packet`.
 
----
-
 ## Connection Lifecycle
 
 ### Server Side
@@ -272,8 +268,6 @@ CLI loop (main thread):
   parse command / send packet
   on /quit  →  send MSG_DISCONNECT  →  close socket  →  join recv_loop
 ```
-
----
 
 ## Messaging Flow
 
@@ -430,24 +424,3 @@ Owns the listen socket, the `m_clients` map, the accept and keepalive threads, a
 
 ### `Client` (client.hpp)
 Owns the connected socket, the recv thread, and the `m_peers` cache. The `m_connected` and `m_running` atomics allow the CLI thread and recv thread to coordinate shutdown without a mutex.
-
----
-
-## Diagrams
-
-The `/diagrams` directory contains PlantUML source (`.puml`) and rendered PNG images for each aspect of the architecture:
-
-| File | Contents |
-|------|----------|
-| `01_class_diagram` | All classes, structs, enums and their relationships |
-| `02_component_architecture` | High-level module and dependency map |
-| `03_sequence_client_connect` | Full TCP + MSG_CONNECT handshake sequence |
-| `04_sequence_messaging` | Broadcast, private, server broadcast, nickname change |
-| `05_sequence_file_transfer` | File transfer: accept, reject, chunked data, server→client |
-| `06_packet_wire_format` | PacketHeader and payload byte layouts |
-| `07_server_thread_model` | All four server threads with full activity flow |
-| `08_client_thread_model` | CLI thread and recv thread with all command/packet handling |
-| `09_crypto_pipeline` | Encrypt→send and recv→decrypt state machine |
-| `10_config_flow` | Three-stage config loading: defaults → file → CLI flags |
-| `11_sequence_keepalive` | Ping/pong cycle, dead client detection, kick flow |
-| `12_network_layer` | Network abstraction API with Windows/POSIX platform split |
