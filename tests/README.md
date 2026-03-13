@@ -1,62 +1,8 @@
-# SafeSocket — Test Suite
+# SafeSocket - Tests
 
 This directory contains the full test suite for SafeSocket, organised into three tiers: **unit**, **integration**, and **stress** tests.
 
----
-
-## Directory Layout
-
-```
-tests/
-├── README.md
-├── CMakeLists.txt          ← CMake entry point (recommended)
-├── Makefile                ← GNU Make alternative (Linux/macOS)
-│
-├── helpers/
-│   ├── test_framework.hpp  ← Zero-dependency single-header test runner
-│   ├── socket_pair.hpp     ← RAII loopback socket pair (for net/packet tests)
-│   └── temp_file.hpp       ← RAII temporary file with auto-cleanup
-│
-├── unit/
-│   ├── crypto/
-│   │   ├── test_xor.cpp            ← XOR cipher (9 tests)
-│   │   ├── test_vigenere.cpp       ← Vigenère cipher (9 tests)
-│   │   ├── test_rc4.cpp            ← RC4 stream cipher (10 tests)
-│   │   └── test_encrypt_type.cpp   ← Name ↔ enum conversions (6 tests)
-│   │
-│   ├── protocol/
-│   │   └── test_packet_header.cpp  ← Wire format, make_packet, constants (13 tests)
-│   │
-│   ├── config/
-│   │   ├── test_config_set_get.cpp   ← All 24 config keys, masking, edge cases (28 tests)
-│   │   └── test_config_load_save.cpp ← File round-trip, comments, bad paths (10 tests)
-│   │
-│   └── network/
-│       ├── test_fmt_bytes.cpp            ← fmt_bytes() B/KB/MB/GB/TB (10 tests)
-│       ├── test_net_init.cpp             ← net_init/cleanup, socket options (9 tests)
-│       ├── test_net_listen_connect.cpp   ← Listen/connect/accept (7 tests)
-│       ├── test_net_raw_io.cpp           ← net_send_raw/net_recv_raw (5 tests)
-│       └── test_net_packet_io.cpp        ← net_send_packet/net_recv_packet (10 tests)
-│
-├── integration/
-│   ├── messaging/
-│   │   ├── test_broadcast.cpp    ← Server→all broadcast (5 tests)
-│   │   ├── test_private_msg.cpp  ← Directed MSG_PRIVATE routing (4 tests)
-│   │   └── test_nick_change.cpp  ← MSG_NICK_SET lifecycle (5 tests)
-│   │
-│   ├── auth/
-│   │   └── test_access_key.cpp   ← require_key / access_key enforcement (5 tests)
-│   │
-│   └── file_transfer/
-│       ├── test_file_send.cpp    ← End-to-end file delivery (6 tests)
-│       └── test_file_hash.cpp    ← Byte-perfect integrity (Fletcher-32) (2 tests)
-│
-└── stress/
-    ├── test_stress_clients.cpp   ← 50 sequential, 20 concurrent, churn, storm (6 tests)
-    └── test_stress_crypto.cpp    ← 1–4 MB round-trips, 10k repeated chunks (7 tests)
-```
-
-**Total: ~141 tests across 16 suites.**
+> **Total: ~141 tests across 16 suites.**
 
 ---
 
@@ -157,31 +103,6 @@ Designed to catch race conditions, resource leaks, and deadlocks under load. The
 ```bash
 ctest -L stress --timeout 120 --output-on-failure
 ```
-
----
-
-## CI Integration
-
-Add to `.github/workflows/test.yml`:
-
-```yaml
-- name: Build tests
-  run: |
-    cd tests && mkdir build && cd build
-    cmake .. -DCMAKE_BUILD_TYPE=Debug
-    cmake --build . --parallel
-
-- name: Run unit tests
-  run: ctest --test-dir tests/build -L unit --output-on-failure
-
-- name: Run integration tests
-  run: ctest --test-dir tests/build -L integration --output-on-failure
-
-- name: Run stress tests (nightly only)
-  if: github.event_name == 'schedule'
-  run: ctest --test-dir tests/build -L stress --output-on-failure --timeout 120
-```
-
 ---
 
 ## Adding a New Test
