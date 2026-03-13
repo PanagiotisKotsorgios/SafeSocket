@@ -1,0 +1,85 @@
+@startuml 07_server_thread_model
+title SafeSocket — Server Thread Model
+
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam activity {
+  BackgroundColor #FFFFFF
+  BorderColor #000000
+  FontColor #000000
+  DiamondBackgroundColor #FFFFFF
+  DiamondBorderColor #000000
+  StartColor #000000
+  EndColor #000000
+  ArrowColor #000000
+  ArrowFontColor #000000
+  BorderThickness 1
+}
+skinparam swimlaneBorderColor #000000
+skinparam swimlaneTitleFontColor #000000
+skinparam noteBackgroundColor #FFFFFF
+skinparam noteBorderColor #000000
+
+|Main Thread|
+start
+:load config;
+:net_init();
+:Server::start(host, port);
+:create listening socket;
+:spawn Accept Thread;
+:spawn Keepalive Thread;
+:Server::run_cli() **[blocks]**;
+
+fork
+  |Accept Thread|
+  repeat
+    :accept() on listen socket;
+    :net_accept() -> client socket;
+    :allocate ClientInfo, assign ID;
+    :spawn Client Handler Thread;
+    :detach thread;
+  repeat while (m_running)
+  :close listen socket;
+  stop
+
+fork again
+  |Client Handler Thread (xN)|
+  :send MSG_SERVER_INFO (MOTD);
+  repeat
+    :net_recv_packet();
+    :decrypt payload;
+    :handle_packet(hdr, payload);
+    note right
+      MSG_CONNECT    -> auth + nick
+      MSG_BROADCAST  -> broadcast
+      MSG_PRIVATE    -> forward to target
+      MSG_NICK_SET   -> update nickname
+      MSG_CLIENT_LIST -> send list
+      MSG_FILE_*     -> file recv
+      MSG_PING       -> send PONG
+      MSG_DISCONNECT -> break loop
+    end note
+  repeat while (ClientInfo.alive)
+  :close client socket;
+  :remove from m_clients;
+  :broadcast disconnect notice;
+  stop
+
+fork again
+  |Keepalive Thread|
+  repeat
+    :sleep(ping_interval seconds);
+    :lock m_clients_mutex;
+    :send MSG_PING to each client;
+    :unlock;
+  repeat while (m_running)
+  stop
+
+end fork
+
+|Main Thread|
+:Server::stop();
+:signal all threads, join;
+stop
+
+@enduml

@@ -1,0 +1,71 @@
+@startuml 09_crypto_pipeline
+title SafeSocket — Encryption / Decryption Pipeline
+
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam state {
+  BackgroundColor #FFFFFF
+  BorderColor #000000
+  FontColor #000000
+  StartColor #000000
+  EndColor #000000
+  ArrowColor #000000
+  ArrowFontColor #000000
+  BorderThickness 1
+}
+skinparam noteBackgroundColor #FFFFFF
+skinparam noteBorderColor #000000
+
+[*] --> PayloadReady
+
+state "Sender Side" as sender_side {
+  state "PayloadReady" as PayloadReady
+  state "crypto_encrypt(buf, type, key)" as Encrypt {
+    state "XOR\nrepeating-key XOR" as XOR
+    state "VIGENERE\nbuf[i] = (buf[i] + key[i%len]) % 256" as VIG
+    state "RC4\nKSA + PRGA keystream XOR" as RC4e
+    [*] --> XOR  : EncryptType::XOR
+    [*] --> VIG  : EncryptType::VIGENERE
+    [*] --> RC4e : EncryptType::RC4
+  }
+  state "Build PacketHeader\n+ net_send_raw()" as SendRaw
+
+  PayloadReady --> Encrypt : enc != NONE
+  PayloadReady --> SendRaw : enc == NONE
+  Encrypt      --> SendRaw
+}
+
+SendRaw --> TCP : bytes on wire
+
+state "Receiver Side" as receiver_side {
+  state "net_recv_raw(20 bytes) header" as RecvHdr
+  state "Validate magic == 0x534B5A4F" as ValidMagic
+  state "net_recv_raw(data_len bytes)" as RecvPayload
+  state "crypto_decrypt(buf, type, key)" as Decrypt {
+    state "XOR\n(self-inverse)" as XOR2
+    state "VIGENERE\nbuf[i] = (buf[i] - key[i%len] + 256) % 256" as VIG2
+    state "RC4\n(self-inverse)" as RC4d
+    [*] --> XOR2 : EncryptType::XOR
+    [*] --> VIG2 : EncryptType::VIGENERE
+    [*] --> RC4d : EncryptType::RC4
+  }
+  state "handle_packet(hdr, payload)" as Dispatch
+  state "Drop Connection\nbad magic" as Drop
+
+  TCP          --> RecvHdr
+  RecvHdr      --> ValidMagic
+  ValidMagic   --> RecvPayload : magic OK
+  ValidMagic   --> Drop        : magic FAIL
+  RecvPayload  --> Decrypt     : enc != NONE
+  RecvPayload  --> Dispatch    : enc == NONE
+  Decrypt      --> Dispatch
+  Drop         --> [*]
+  Dispatch     --> [*]
+}
+
+note right of sender_side
+  Key and EncryptType sourced from
+  g_config — must match on both ends.
+end note
+
+@enduml

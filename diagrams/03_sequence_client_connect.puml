@@ -1,0 +1,76 @@
+@startuml 03_sequence_client_connect
+title SafeSocket — Client Connection & Handshake
+
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam sequence {
+  ParticipantBackgroundColor #FFFFFF
+  ParticipantBorderColor #000000
+  ParticipantFontColor #000000
+  LifeLineBorderColor #000000
+  ArrowColor #000000
+  ArrowFontColor #000000
+  DividerBackgroundColor #FFFFFF
+  DividerBorderColor #000000
+  GroupBackgroundColor #FFFFFF
+  GroupBorderColor #000000
+  NoteBackgroundColor #FFFFFF
+  NoteBorderColor #000000
+  BoxBackgroundColor #FFFFFF
+  BoxBorderColor #000000
+}
+skinparam ArrowColor #000000
+
+actor       "User"          as user
+participant "main.cpp"      as main
+participant "Client"        as client
+participant "RecvThread"    as recv
+participant "Network Layer" as net
+participant "Server"        as server
+participant "AcceptThread"  as accept
+
+== Startup ==
+user  -> main   : safesocket client --host x.x.x.x --port 9000 --nick Alice
+main  -> main   : load config, apply CLI overrides
+main  -> net    : net_init()
+main  -> client : Client()
+main  -> client : connect(host, port)
+
+== TCP Handshake ==
+client -> net    : net_connect(host, port, timeout)
+net    -> net    : create socket, set non-blocking\nconnect() + select() timeout
+net    -> server : TCP SYN
+server -> net    : TCP SYN-ACK
+net    -> client : connected socket
+
+== Receive Thread Launch ==
+client -> recv : spawn recv_loop thread
+activate recv
+
+== MSG_CONNECT Handshake ==
+client -> net    : net_send_packet(MSG_CONNECT)\n[nick_len][nick][access_key]
+net    -> server : packet over TCP
+
+server -> accept : accept() returns new socket
+accept -> server : spawn ClientInfo + client_loop thread
+
+server -> server : validate access_key, assign client ID
+server -> net    : net_send_packet(MSG_SERVER_INFO)\npayload = MOTD
+net    -> recv   : packet arrives
+recv   -> client : print MOTD to console
+
+server -> net    : net_send_packet(MSG_CLIENT_LIST)\n[count][id][nick]...
+net    -> recv   : packet arrives
+recv   -> client : update m_peers cache
+
+== Ready ==
+client -> main : connect() returns true
+main   -> client : run_cli()  [blocks]
+
+note over client, server
+  Connection established.
+  RecvThread handles all incoming
+  packets concurrently with CLI input.
+end note
+
+@enduml

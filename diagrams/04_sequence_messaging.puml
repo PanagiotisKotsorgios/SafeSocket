@@ -1,0 +1,51 @@
+@startuml 04_sequence_messaging
+title SafeSocket — Messaging Flows
+
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam sequence {
+  ParticipantBackgroundColor #FFFFFF
+  ParticipantBorderColor #000000
+  ParticipantFontColor #000000
+  LifeLineBorderColor #000000
+  ArrowColor #000000
+  ArrowFontColor #000000
+  DividerBackgroundColor #FFFFFF
+  DividerBorderColor #000000
+  GroupBackgroundColor #FFFFFF
+  GroupBorderColor #000000
+  NoteBackgroundColor #FFFFFF
+  NoteBorderColor #000000
+}
+
+participant "Client A (Alice)" as A
+participant "Server"           as S
+participant "Client B (Bob)"   as B
+participant "Client C (Carol)" as C
+
+== Broadcast ==
+note over A: User types: "Hello everyone!"
+A -> S : MSG_BROADCAST  sender=Alice  target=BROADCAST_ID
+S -> B : MSG_BROADCAST  sender=Alice  payload="Hello everyone!"
+S -> C : MSG_BROADCAST  sender=Alice  payload="Hello everyone!"
+
+== Private Message ==
+note over A: User types: /msg Bob_ID Hello Bob!
+A -> S : MSG_PRIVATE  sender=Alice  target=Bob
+S -> B : MSG_PRIVATE  sender=Alice  payload="Hello Bob!"
+note over C: no packet delivered
+
+== Server Broadcast ==
+note over S: Operator types: /broadcast Server notice!
+S -> A : MSG_BROADCAST  sender=SERVER_ID
+S -> B : MSG_BROADCAST  sender=SERVER_ID
+S -> C : MSG_BROADCAST  sender=SERVER_ID
+
+== Nickname Change ==
+note over B: User types: /nick Robert
+B -> S : MSG_NICK_SET  payload="Robert"
+S -> S : update ClientInfo.nickname
+S -> A : MSG_BROADCAST  "Bob is now known as Robert"
+S -> C : MSG_BROADCAST  "Bob is now known as Robert"
+
+@enduml

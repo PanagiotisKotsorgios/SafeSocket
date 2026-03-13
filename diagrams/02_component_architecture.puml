@@ -1,0 +1,109 @@
+@startuml 02_component_architecture
+title SafeSocket — Component Architecture
+
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam component {
+  BackgroundColor #FFFFFF
+  BorderColor #000000
+  FontColor #000000
+  FontSize 12
+}
+skinparam package {
+  BackgroundColor #FFFFFF
+  BorderColor #000000
+  FontColor #000000
+  BorderThickness 1
+}
+skinparam database {
+  BackgroundColor #FFFFFF
+  BorderColor #000000
+}
+skinparam ArrowColor #000000
+skinparam ArrowFontColor #000000
+skinparam noteBackgroundColor #FFFFFF
+skinparam noteBorderColor #000000
+
+package "SafeSocket Application" {
+
+  package "Entry Point" {
+    [main.cpp] as main
+  }
+
+  package "Server Module" {
+    [Server] as server
+    [Accept Loop\n(thread)] as accept_t
+    [Client Handler\n(thread per client)] as client_t
+    [Keepalive Loop\n(thread)] as keepalive_t
+    [Server CLI] as server_cli
+  }
+
+  package "Client Module" {
+    [Client] as client
+    [Recv Loop\n(thread)] as recv_t
+    [Client CLI] as client_cli
+  }
+
+  package "Network Layer" {
+    [net_listen / net_accept] as net_srv
+    [net_connect] as net_cli
+    [net_send_packet / net_recv_packet] as net_io
+    [net_send_raw / net_recv_raw] as net_raw
+  }
+
+  package "Protocol Layer" {
+    [PacketHeader (20 bytes)] as hdr
+    [MsgType Enum (18 types)] as msgtype
+    [make_packet helpers] as make_pkt
+  }
+
+  package "Crypto Module" {
+    [NONE / XOR / VIGENERE / RC4] as crypto
+  }
+
+  package "Config Module" {
+    [g_config singleton] as cfg
+    database "safesocket.conf" as conf_file
+    database "safesocket.log" as log_file
+  }
+
+}
+
+database "TCP Socket (OS)" as tcp
+
+main --> server     : server mode
+main --> client     : client mode
+main --> cfg        : load / override
+
+server --> accept_t
+server --> keepalive_t
+server --> server_cli
+accept_t --> client_t : spawns per client
+
+client --> recv_t
+client --> client_cli
+
+server --> net_srv
+server --> net_io
+client --> net_cli
+client --> net_io
+
+net_io --> net_raw
+net_io --> crypto  : encrypt / decrypt payload
+net_io --> hdr     : serialize header
+hdr    --> msgtype
+hdr    --> make_pkt
+
+net_raw --> tcp
+net_srv --> tcp
+net_cli --> tcp
+
+cfg --> conf_file : load / save
+server --> log_file : write log
+
+note right of crypto
+  In-place on payload
+  before net_send_raw
+end note
+
+@enduml

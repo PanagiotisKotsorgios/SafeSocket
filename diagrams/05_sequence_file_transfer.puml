@@ -1,0 +1,68 @@
+@startuml 05_sequence_file_transfer
+title SafeSocket — File Transfer Sequence
+
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam sequence {
+  ParticipantBackgroundColor #FFFFFF
+  ParticipantBorderColor #000000
+  ParticipantFontColor #000000
+  LifeLineBorderColor #000000
+  ArrowColor #000000
+  ArrowFontColor #000000
+  DividerBackgroundColor #FFFFFF
+  DividerBorderColor #000000
+  GroupBackgroundColor #FFFFFF
+  GroupBorderColor #000000
+  NoteBackgroundColor #FFFFFF
+  NoteBorderColor #000000
+}
+
+participant "Sender (Client A)" as sender
+participant "Server"            as server
+participant "Receiver (Client B)" as receiver
+
+== Client to Client File Transfer ==
+note over sender: /sendfile Bob_ID report.pdf
+
+sender -> server : MSG_FILE_START  sender=A  target=B\n[file_size=2MB][filename_len=10]["report.pdf"]
+server -> receiver : MSG_FILE_START (forwarded)
+
+alt auto_accept_files = true
+  receiver -> receiver : auto-accept
+else user prompted
+  note over receiver: "Accept file 'report.pdf' (2.00 MB)? [y/N]"
+  receiver -> receiver : user types 'y'
+end
+
+receiver -> server : MSG_FILE_ACCEPT  sender=B  target=A
+server   -> sender : MSG_FILE_ACCEPT (forwarded)
+
+loop each 64 KB chunk
+  sender -> server   : MSG_FILE_DATA  payload=<chunk>
+  server -> receiver : MSG_FILE_DATA (forwarded)
+end
+
+sender -> server   : MSG_FILE_END
+server -> receiver : MSG_FILE_END (forwarded)
+receiver -> server : MSG_ACK "File received OK"
+server   -> sender : MSG_ACK (forwarded)
+
+== Rejected Transfer ==
+sender   -> server   : MSG_FILE_START ...
+server   -> receiver : MSG_FILE_START (forwarded)
+note over receiver: user types 'n'
+receiver -> server   : MSG_FILE_REJECT
+server   -> sender   : MSG_FILE_REJECT (forwarded)
+note over sender: "Transfer rejected by peer"
+
+== Server to Client ==
+note over server: /sendfile Bob_ID update.zip
+server   -> receiver : MSG_FILE_START  sender=SERVER  target=B
+receiver -> server   : MSG_FILE_ACCEPT
+loop chunks
+  server -> receiver : MSG_FILE_DATA
+end
+server -> receiver : MSG_FILE_END
+
+@enduml

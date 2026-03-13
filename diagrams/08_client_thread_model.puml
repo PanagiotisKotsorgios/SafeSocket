@@ -1,0 +1,79 @@
+@startuml 08_client_thread_model
+title SafeSocket — Client Thread Model
+
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam activity {
+  BackgroundColor #FFFFFF
+  BorderColor #000000
+  FontColor #000000
+  DiamondBackgroundColor #FFFFFF
+  DiamondBorderColor #000000
+  StartColor #000000
+  EndColor #000000
+  ArrowColor #000000
+  ArrowFontColor #000000
+  BorderThickness 1
+}
+skinparam swimlaneBorderColor #000000
+skinparam swimlaneTitleFontColor #000000
+skinparam noteBackgroundColor #FFFFFF
+skinparam noteBorderColor #000000
+
+|Main / CLI Thread|
+start
+:Client::connect(host, port);
+:net_connect() with timeout;
+:spawn RecvThread;
+:send MSG_CONNECT [nick][access_key];
+:Client::run_cli() **[blocks]**;
+
+fork
+  |Recv Thread|
+  repeat
+    :net_recv_packet();
+    :validate magic;
+    :read payload, crypto_decrypt();
+    :handle_packet(hdr, payload);
+    note right
+      MSG_SERVER_INFO  -> print MOTD
+      MSG_BROADCAST    -> print message
+      MSG_PRIVATE      -> print PM
+      MSG_CLIENT_LIST  -> update m_peers
+      MSG_ACK          -> print ack
+      MSG_ERROR        -> print error
+      MSG_KICK         -> print + exit
+      MSG_PING         -> send PONG
+      MSG_FILE_START   -> prompt / auto-accept
+      MSG_FILE_DATA    -> write chunk to disk
+      MSG_FILE_END     -> close file
+      MSG_DISCONNECT   -> break loop
+    end note
+  repeat while (m_running)
+  :m_connected = false;
+  stop
+
+end fork
+
+|Main / CLI Thread|
+:read stdin commands;
+note right
+  /broadcast <msg>       -> MSG_BROADCAST
+  /msg <id> <msg>        -> MSG_PRIVATE
+  /msgn <nick> <msg>     -> MSG_PRIVATE by nick
+  /list                  -> MSG_CLIENT_LIST
+  /sendfile <id> <path>  -> file transfer
+  /sendfileserver <path> -> file to server
+  /nick <n>              -> MSG_NICK_SET
+  /myid                  -> print my ID
+  /config                -> show config
+  /set <key> <value>     -> update config
+  /quit                  -> disconnect + exit
+  <plain text>           -> MSG_BROADCAST
+end note
+:Client::disconnect();
+:send MSG_DISCONNECT;
+:close socket, join RecvThread;
+stop
+
+@enduml

@@ -1,0 +1,78 @@
+@startuml 10_config_flow
+title SafeSocket — Configuration Loading & Override Flow
+
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam activity {
+  BackgroundColor #FFFFFF
+  BorderColor #000000
+  FontColor #000000
+  DiamondBackgroundColor #FFFFFF
+  DiamondBorderColor #000000
+  StartColor #000000
+  EndColor #000000
+  ArrowColor #000000
+  ArrowFontColor #000000
+  BorderThickness 1
+}
+skinparam noteBackgroundColor #FFFFFF
+skinparam noteBorderColor #000000
+
+start
+:Binary starts: argv[0..n];
+
+:Stage 1: Compiled-in defaults\n(struct member initialisers in Config);
+note right
+  host=127.0.0.1, port=9000
+  nickname=anonymous
+  encrypt_type=NONE
+  keepalive=true, etc.
+end note
+
+:Stage 2: scan argv for --config flag;
+if (--config <path> found?) then (yes)
+  :config_file = argv[i+1];
+else (no)
+  :config_file = "safesocket.conf";
+endif
+
+:Config::load(config_file);
+if (file exists?) then (yes)
+  :parse line by line\nskip # and ; comments;
+  :for each "key=value" -> Config::set(key, value);
+  :print "[config] Loaded: <path>";
+else (no)
+  :use compiled-in defaults silently;
+endif
+
+:Stage 3: apply --flag overrides from argv;
+note right
+  --host, --port, --nick
+  --encrypt, --key
+  --download-dir, --log
+  --verbose, --no-color
+  --max-clients, --require-key
+  --motd, --server-name
+end note
+
+if (mode == genconfig?) then (yes)
+  :Config::save(path);
+  :Config::print();
+  stop
+endif
+
+:net_init();
+
+if (mode == server?) then (yes)
+  :warn if encrypt set but no key;
+  :warn if require_key but no access_key;
+  :Server::start();
+else (client)
+  :warn if encrypt set but no key;
+  :Client::connect();
+endif
+
+:g_config readable by all threads;
+stop
+
+@enduml

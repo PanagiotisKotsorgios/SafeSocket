@@ -1,0 +1,100 @@
+@startuml 12_network_layer
+title SafeSocket — Network Abstraction Layer
+
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam component {
+  BackgroundColor #FFFFFF
+  BorderColor #000000
+  FontColor #000000
+  FontSize 12
+  BorderThickness 1
+}
+skinparam package {
+  BackgroundColor #FFFFFF
+  BorderColor #000000
+  FontColor #000000
+  BorderThickness 1
+}
+skinparam noteBackgroundColor #FFFFFF
+skinparam noteBorderColor #000000
+skinparam ArrowColor #000000
+skinparam ArrowFontColor #000000
+
+package "network.hpp / network.cpp" {
+
+  package "Lifecycle" {
+    [net_init()] as init
+    [net_cleanup()] as cleanup
+  }
+
+  package "Server Helpers" {
+    [net_listen(host, port, backlog)] as listen_fn
+    [net_accept(server_sock, peer_ip)] as accept_fn
+  }
+
+  package "Client Helpers" {
+    [net_connect(host, port, timeout)] as connect_fn
+  }
+
+  package "Socket Options" {
+    [net_set_nonblocking(s, bool)] as nonblock_fn
+    [net_set_nodelay(s)] as nodelay_fn
+    [net_set_reuseaddr(s)] as reuseaddr_fn
+  }
+
+  package "Low-Level I/O" {
+    [net_send_raw(s, data, len)\nloop until all bytes sent] as send_raw
+    [net_recv_raw(s, buf, len)\nloop until all bytes recv'd] as recv_raw
+  }
+
+  package "Framed Packet I/O" {
+    [net_send_packet(s, type, sender,\ntarget, data, len, enc, key)] as send_pkt
+    [net_recv_packet(s, hdr, payload, enc, key)] as recv_pkt
+  }
+
+  package "Diagnostics" {
+    [net_error_str()] as err_str
+    [fmt_bytes(bytes)] as fmt_b
+  }
+}
+
+package "Platform: Windows" {
+  [Winsock2\nWSAStartup / WSACleanup\nclosesocket / WSAGetLastError] as winsock
+}
+
+package "Platform: POSIX" {
+  [BSD Sockets\nclose / errno\nfcntl O_NONBLOCK / SIG_IGN] as posix
+}
+
+send_pkt --> send_raw : after crypto_encrypt()
+recv_pkt --> recv_raw : header then payload
+
+send_raw --> winsock : Windows
+send_raw --> posix   : POSIX
+recv_raw --> winsock : Windows
+recv_raw --> posix   : POSIX
+
+listen_fn  --> reuseaddr_fn
+listen_fn  --> nodelay_fn
+accept_fn  --> nodelay_fn
+connect_fn --> nonblock_fn
+
+note bottom of send_raw
+  MSG_NOSIGNAL on POSIX
+  prevents SIGPIPE
+end note
+
+note bottom of recv_pkt
+  1. recv_raw(HEADER_SIZE=20)
+  2. check magic == 0x534B5A4F
+  3. recv_raw(hdr.data_len)
+  4. crypto_decrypt(payload)
+end note
+
+note right of init
+  Windows: WSAStartup(2.2)
+  POSIX: signal(SIGPIPE, SIG_IGN)
+end note
+
+@enduml

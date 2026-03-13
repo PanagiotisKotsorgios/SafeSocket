@@ -1,0 +1,168 @@
+@startuml 01_class_diagram
+title SafeSocket — Class & Structure Diagram
+
+skinparam backgroundColor #FFFFFF
+skinparam classAttributeIconSize 0
+skinparam class {
+  BackgroundColor #FFFFFF
+  BorderColor #000000
+  HeaderBackgroundColor #000000
+  HeaderFontColor #FFFFFF
+  FontColor #000000
+  FontSize 12
+  BorderThickness 1
+}
+skinparam enum {
+  BackgroundColor #FFFFFF
+  BorderColor #000000
+  HeaderBackgroundColor #000000
+  HeaderFontColor #FFFFFF
+}
+skinparam ArrowColor #000000
+skinparam shadowing false
+
+enum EncryptType {
+  NONE = 0
+  XOR = 1
+  VIGENERE = 2
+  RC4 = 3
+}
+
+enum MsgType {
+  MSG_CONNECT = 1
+  MSG_DISCONNECT = 2
+  MSG_TEXT = 3
+  MSG_BROADCAST = 4
+  MSG_PRIVATE = 5
+  MSG_CLIENT_LIST = 6
+  MSG_FILE_START = 7
+  MSG_FILE_DATA = 8
+  MSG_FILE_END = 9
+  MSG_ACK = 10
+  MSG_ERROR = 11
+  MSG_NICK_SET = 12
+  MSG_SERVER_INFO = 13
+  MSG_PING = 14
+  MSG_PONG = 15
+  MSG_KICK = 16
+  MSG_FILE_ACCEPT = 17
+  MSG_FILE_REJECT = 18
+}
+
+class PacketHeader <<struct>> {
+  + magic      : uint32_t
+  + msg_type   : uint32_t
+  + sender_id  : uint32_t
+  + target_id  : uint32_t
+  + data_len   : uint32_t
+}
+
+class FileStartPayload <<struct>> {
+  + file_size    : uint64_t
+  + filename_len : uint32_t
+}
+
+class Config {
+  + host             : string
+  + port             : int
+  + max_clients      : int
+  + recv_timeout     : int
+  + connect_timeout  : int
+  + nickname         : string
+  + server_name      : string
+  + motd             : string
+  + encrypt_type     : EncryptType
+  + encrypt_key      : string
+  + require_key      : bool
+  + access_key       : string
+  + download_dir     : string
+  + auto_accept_files: bool
+  + max_file_size    : size_t
+  + log_to_file      : bool
+  + log_file         : string
+  + verbose          : bool
+  + keepalive        : bool
+  + ping_interval    : int
+  + color_output     : bool
+  + buffer_size      : int
+  --
+  + print()          : void
+  + load(path)       : bool
+  + save(path)       : bool
+  + set(key, value)  : void
+  + get(key)         : string
+  + print_help()     : void
+}
+
+class ClientInfo <<struct>> {
+  + id            : uint32_t
+  + sock          : sock_t
+  + ip            : string
+  + nickname      : string
+  + connected_at  : time_t
+  + authenticated : bool
+  + alive         : atomic<bool>
+  + thread        : std::thread
+}
+
+class Server {
+  - m_listen_sock      : sock_t
+  - m_clients          : map<uint32_t, ClientInfo*>
+  - m_clients_mutex    : mutex
+  - m_next_id          : uint32_t
+  - m_running          : atomic<bool>
+  - m_accept_thread    : thread
+  - m_keepalive_thread : thread
+  - m_bytes_sent       : uint64_t
+  - m_bytes_recv       : uint64_t
+  --
+  + start(host, port)            : bool
+  + stop()                       : void
+  + run_cli()                    : void
+  + broadcast_text(msg, from_id) : void
+  + send_text(id, msg, from_id)  : void
+  + send_file(id, filepath)      : bool
+  + send_file_all(filepath)      : bool
+  + list_clients()               : void
+  + kick_client(id, reason)      : void
+  - accept_loop()                : void
+  - client_loop(info)            : void
+  - keepalive_loop()             : void
+}
+
+class PeerInfo <<struct>> {
+  + id       : uint32_t
+  + nickname : string
+}
+
+class Client {
+  - m_sock        : sock_t
+  - m_my_id       : uint32_t
+  - m_connected   : atomic<bool>
+  - m_running     : atomic<bool>
+  - m_recv_thread : thread
+  - m_peers       : map<uint32_t, PeerInfo>
+  - m_peers_mutex : mutex
+  --
+  + connect(host, port)           : bool
+  + disconnect()                  : void
+  + run_cli()                     : void
+  + send_broadcast(msg)           : void
+  + send_private(id, msg)         : void
+  + request_client_list()         : void
+  + send_file_to_server(path)     : bool
+  + send_file_to_client(id, path) : bool
+  + set_nickname(nick)            : void
+  - recv_loop()                   : void
+}
+
+Server "1" *-- "0..*" ClientInfo : manages >
+Client "1" *-- "0..*" PeerInfo   : caches >
+Server ..> Config       : reads g_config
+Client ..> Config       : reads g_config
+Server ..> PacketHeader : sends / recvs
+Client ..> PacketHeader : sends / recvs
+PacketHeader ..> MsgType : msg_type field
+Config *-- EncryptType  : encrypt_type
+
+@enduml

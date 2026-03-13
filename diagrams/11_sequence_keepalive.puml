@@ -1,0 +1,59 @@
+@startuml 11_sequence_keepalive
+title SafeSocket — Keepalive & Disconnect Detection
+
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam sequence {
+  ParticipantBackgroundColor #FFFFFF
+  ParticipantBorderColor #000000
+  ParticipantFontColor #000000
+  LifeLineBorderColor #000000
+  ArrowColor #000000
+  ArrowFontColor #000000
+  DividerBackgroundColor #FFFFFF
+  DividerBorderColor #000000
+  GroupBackgroundColor #FFFFFF
+  GroupBorderColor #000000
+  NoteBackgroundColor #FFFFFF
+  NoteBorderColor #000000
+}
+
+participant "KeepaliveThread" as ka
+participant "Server"          as s
+participant "Client A (alive)" as ca
+participant "Client B (dead)"  as cb
+
+== Normal Keepalive Cycle ==
+loop every ping_interval seconds
+  ka -> s  : wake up
+  s  -> ca : MSG_PING  target=A
+  s  -> cb : MSG_PING  target=B
+  ca -> s  : MSG_PONG  sender=A
+  note over cb: no response\n(crashed / network lost)
+end
+
+== Dead Client Detection ==
+note over s,cb
+  net_recv_packet() in B's handler
+  returns false (recv == 0 or error)
+end note
+s -> s : ClientInfo B.alive = false
+s -> s : sock_close(B.sock)
+s -> s : remove B from m_clients
+s -> ca : MSG_BROADCAST "Client B disconnected"
+
+== Graceful Client Disconnect ==
+note over ca: user types /quit
+ca -> s : MSG_DISCONNECT
+s  -> s : break recv loop
+s  -> s : sock_close(A.sock), remove A
+s  -> s : broadcast "Client A disconnected"
+
+== Server Kick ==
+note over s: operator types /kick A_ID reason
+s  -> ca : MSG_KICK  payload="reason text"
+ca -> ca : print "You were kicked"\ndisconnect()
+s  -> s  : sock_close(A.sock)
+s  -> s  : broadcast "Alice was kicked"
+
+@enduml

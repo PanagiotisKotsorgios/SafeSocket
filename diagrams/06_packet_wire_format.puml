@@ -1,0 +1,60 @@
+@startuml 06_packet_wire_format
+title SafeSocket — Packet Wire Format
+
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam rectangle {
+  BackgroundColor #FFFFFF
+  BorderColor #000000
+  FontColor #000000
+  FontSize 12
+  BorderThickness 1
+}
+skinparam noteBackgroundColor #FFFFFF
+skinparam noteBorderColor #000000
+skinparam ArrowColor #000000
+
+rectangle "PacketHeader — 20 bytes, #pragma pack(push,1)" as header_box {
+  rectangle "  magic\n  0x534B5A4F\n  (4 bytes)  " as f_magic
+  rectangle "  msg_type\n  uint32_t\n  (4 bytes)  " as f_type
+  rectangle "  sender_id\n  uint32_t\n  (4 bytes)  " as f_sender
+  rectangle "  target_id\n  uint32_t\n  (4 bytes)  " as f_target
+  rectangle "  data_len\n  uint32_t\n  (4 bytes)  " as f_len
+}
+
+rectangle "Payload — data_len bytes (may be encrypted)" as payload_box
+
+rectangle "MSG_FILE_START payload" as file_start_box {
+  rectangle "  file_size\n  uint64_t\n  (8 bytes)  " as fs_size
+  rectangle "  filename_len\n  uint32_t\n  (4 bytes)  " as fs_flen
+  rectangle "  filename bytes\n  (no null terminator)  " as fs_fname
+}
+
+rectangle "MSG_CLIENT_LIST payload" as client_list_box {
+  rectangle "  count\n  uint32_t\n  (4 bytes)  " as cl_count
+  rectangle "  [id: uint32_t]\n  [nick_len: uint16_t]\n  [nick bytes]\n  x count entries  " as cl_entries
+}
+
+rectangle "MSG_CONNECT payload" as connect_box {
+  rectangle "  nick_len\n  uint16_t\n  (2 bytes)  " as cn_nlen
+  rectangle "  nickname\n  (nick_len bytes)  " as cn_nick
+  rectangle "  access_key\n  (remaining bytes,\n  optional)  " as cn_key
+}
+
+note bottom of header_box
+  magic must equal 0x534B5A4F on
+  every recv — mismatch drops connection
+end note
+
+note right of payload_box
+  NONE     -> plaintext
+  XOR      -> repeating-key XOR
+  VIGENERE -> byte-level (+/- mod 256)
+  RC4      -> key-scheduled stream cipher
+end note
+
+header_box -[hidden]right- payload_box
+file_start_box -[hidden]right- client_list_box
+client_list_box -[hidden]right- connect_box
+
+@enduml
