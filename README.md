@@ -3,7 +3,7 @@
 <br>
 
 <p align="center">
-  <img src="https://github.com/PanagiotisKotsorgios/SafeSocket/blob/main/assets/safesocket_logo.png" width="520" alt="SafeSocket Logo"/>
+  <img src="https://github.com/PanagiotisKotsorgios/SafeSocket/blob/main/assets/safesocket_logo.png" width="820" alt="SafeSocket Logo"/>
 </p>
 
 
