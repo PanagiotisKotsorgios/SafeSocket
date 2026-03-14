@@ -611,7 +611,7 @@
 //       Raft-like consensus for room state and user list.
 //       [BLOCKED] Requires clustering (Section 7) as a foundation.
 
-// [P4] Voice chat (VoIP) + vIDEO Chat
+// [P4] Voice chat (VoIP) + vIDEO Chat + Remote Aceess And Controll
 //       Opus codec frames sent over the UDP transport.
 //       Jitter buffer and packet loss concealment in the client.
 //       [BLOCKED] Requires UDP transport and async I/O.
