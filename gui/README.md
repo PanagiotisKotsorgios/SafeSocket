@@ -1,4 +1,4 @@
-# SafeSocket GUI — v0.0.2
+# SafeSocket GUI — v0.0.1
 
 This directory contains the **optional graphical front-end** for SafeSocket, built on top of
 [Dear ImGui](https://github.com/ocornut/imgui) and [SDL2](https://www.libsdl.org/).
