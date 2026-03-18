@@ -26,7 +26,7 @@
 
 | | |
 |---|---|
-| <img src="https://github.com/PanagiotisKotsorgios/SafeSocket/blob/main/assets/img1.jpg" width="400"/> | <img src="https://github.com/PanagiotisKotsorgios/SafeSocket/blob/main/assets/img2.jpg" width="400"/> |
+| <img src="https://github.com/PanagiotisKotsorgios/SafeSocket/blob/main/assets/img1.jpg" width="400"/> | <img src="https://github.com/PanagiotisKotsorgios/SafeSocket/blob/main/assets/guiv001.jpg" width="400"/> |
 
 <br>
 
