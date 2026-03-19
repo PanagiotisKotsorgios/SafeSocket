@@ -8,7 +8,7 @@
 // [16 bytes salt][16 bytes IV][4 bytes data_len][data_len bytes AES-256-CBC]
 // Data plaintext: "SAFESOCKET\nuser=<user>\nver=1\n"
 
-#define SEC_FILE "local.enc"
+#define SS_SAFESOCK_SEC_FILE "local.enc"
 
 struct SecurityState {
     // Runtime state
@@ -72,18 +72,18 @@ bool sec_decrypt(const std::vector<unsigned char>& blob,
                  std::string& out_plaintext);
 
 // ── File operations ───────────────────────────────────────────────────────
-bool sec_file_exists(const char* path = SEC_FILE);
+bool sec_file_exists(const char* path = SS_SAFESOCK_SEC_FILE);
 bool sec_write_file(const std::string& username,
                     const std::string& password,
-                    const char* path = SEC_FILE);
+                    const char* path = SS_SAFESOCK_SEC_FILE);
 bool sec_verify_login(const std::string& username,
                       const std::string& password,
-                      const char* path = SEC_FILE);
+                      const char* path = SS_SAFESOCK_SEC_FILE);
 bool sec_read_username(const std::string& password,
                        std::string& out_username,
-                       const char* path = SEC_FILE);
+                       const char* path = SS_SAFESOCK_SEC_FILE);
 bool sec_copy_file(const char* src, const char* dst);
-bool sec_delete_file(const char* path = SEC_FILE);
+bool sec_delete_file(const char* path = SS_SAFESOCK_SEC_FILE);
 
 // ── Password generator ────────────────────────────────────────────────────
 std::string sec_generate_password(int length = 18);

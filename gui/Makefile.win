@@ -1,0 +1,85 @@
+# SafeSocketGUI — Windows MSYS2/UCRT64 Makefile
+# Build:   make -f Makefile.win        (sequential, safe on all systems)
+# Faster:  make -f Makefile.win -j2    (parallel, needs ~2 GB RAM per job)
+# NOTE: imgui files are large. Do NOT use -j$(nproc) — it exhausts RAM.
+
+CXX      = g++
+CXXFLAGS = -std=c++17 -Wall -O2 \
+           -Wno-unused-result \
+           -Wno-stringop-truncation \
+           -Wno-deprecated-declarations \
+           -Iinclude \
+           -Iimgui \
+           $(shell pkg-config --cflags sdl3 2>/dev/null) \
+           -DWIN32_LEAN_AND_MEAN \
+           -D_WIN32_WINNT=0x0600 \
+           -DUNICODE
+
+LDFLAGS  = \
+           $(shell pkg-config --libs sdl3 2>/dev/null || echo -lSDL3) \
+           -lopengl32 \
+           -lssl \
+           -lcrypto \
+           -lws2_32 \
+           -lcomdlg32 \
+           -mwindows
+
+TARGET   = SafeSocketGUI.exe
+
+IMGUI_SRC = \
+  imgui/imgui.cpp \
+  imgui/imgui_draw.cpp \
+  imgui/imgui_tables.cpp \
+  imgui/imgui_widgets.cpp \
+  imgui/imgui_impl_sdl3.cpp \
+  imgui/imgui_impl_opengl3.cpp
+
+APP_SRC = \
+  src/main_gui.cpp \
+  src/app.cpp \
+  src/window_connect.cpp \
+  src/window_chat.cpp \
+  src/window_server.cpp \
+  src/window_files.cpp \
+  src/window_settings.cpp \
+  src/security.cpp \
+  src/network.cpp \
+  src/client.cpp \
+  src/server.cpp \
+  src/config.cpp \
+  src/crypto.cpp \
+  src/server_gui_ext.cpp
+
+SOURCES  = $(IMGUI_SRC) $(APP_SRC)
+OBJECTS  = $(patsubst %.cpp,obj/%.o,$(notdir $(SOURCES)))
+
+all: obj $(TARGET)
+
+$(TARGET): $(OBJECTS)
+	$(CXX) -o $@ $^ $(LDFLAGS)
+	@echo ""
+	@echo "  Build complete: $(TARGET)"
+	@echo ""
+
+obj/%.o: imgui/%.cpp | obj
+	$(CXX) $(CXXFLAGS) -c $< -o $@
+
+obj/%.o: src/%.cpp | obj
+	$(CXX) $(CXXFLAGS) -c $< -o $@
+
+obj:
+	mkdir -p obj
+
+clean:
+	rm -rf obj $(TARGET)
+
+.PHONY: all clean
+
+# If parallel build causes out-of-memory, use: make -f Makefile.win safe
+safe:
+	$(MAKE) -f Makefile.win -j2 all
+
+serial:
+	$(MAKE) -f Makefile.win -j1 all
+
+.PHONY: all clean safe serial

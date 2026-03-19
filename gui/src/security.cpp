@@ -1,6 +1,6 @@
 #include "../include/security.hpp"
 #include "../include/app.hpp"
-#include "../../imgui/imgui.h"
+#include "imgui.h"
 
 #include <openssl/evp.h>
 #include <openssl/rand.h>
@@ -653,7 +653,7 @@ void draw_security_modal(SecurityState& sec)
             ImGui::InputText("##ep", sec.export_path, sizeof(sec.export_path));
             ImGui::Spacing();
             if (action_button("Export local.enc", 160)) {
-                if (sec_copy_file(SEC_FILE, sec.export_path))
+                if (sec_copy_file(SS_SAFESOCK_SEC_FILE, sec.export_path))
                     ImGui::OpenPopup("ExportOK");
             }
             if (ImGui::BeginPopup("ExportOK")) {
