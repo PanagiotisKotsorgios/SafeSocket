@@ -1,6 +1,6 @@
 <h1 align="center">The SafeSocket App</h1>
 
-<br>
+<br>.
 
 <p align="center">
   <img src="https://github.com/PanagiotisKotsorgios/SafeSocket/blob/main/assets/safesocket_logo.png" width="820" alt="SafeSocket Logo"/>
