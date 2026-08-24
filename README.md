@@ -9,7 +9,7 @@
 
 
 <p align="center">
-  Cross-platform encrypted TCP chat and file transfer — C++11, zero external dependencies.
+  Cross-platform encrypted TCP chat and file transfer — C++11, zero external dependencies..
 </p>
 
 <p align="center">
